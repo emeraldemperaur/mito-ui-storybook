@@ -1,0 +1,319 @@
+import { Meta } from "@storybook/addon-docs/blocks";
+
+import AiCover from "./assets/assets.png";
+import DataControls from "./assets/assets.png";
+import McpContext from "./assets/context.png";
+import Theming from "./assets/styling.png";
+import TsQuality from "./assets/share.png";
+import InstallBanner from "./assets/testing.png";
+import Github from "./assets/github.svg";
+import TypeScript from "./assets/typescript-logo.png";
+import NPM from "./assets/npm-icon-logo.png";
+
+
+export const RightArrow = () => <svg 
+    viewBox="0 0 14 14" 
+    width="8px" 
+    height="14px" 
+    style={{ 
+      marginLeft: '4px',
+      display: 'inline-block',
+      shapeRendering: 'inherit',
+      verticalAlign: 'middle',
+      fill: 'currentColor',
+      'path fill': 'currentColor'
+    }}
+>
+  <path d="m11.1 7.35-5.5 5.5a.5.5 0 0 1-.7-.7L10.04 7 4.9 1.85a.5.5 0 1 1 .7-.7l5.5 5.5c.2.2.2.5 0 .7Z" />
+</svg>
+
+<Meta title="Welcome to Mito UI" />
+
+<div className="sb-container">
+  <div className='sb-section-title'>
+    <h1>Full Stack Component Library & AI Context Server</h1>
+    <p>Welcome to the official documentation for Mito UI. Built to streamline the modern engineering workflow, this framework pairs an intelligent, context-aware UI library with a powerful MCP server. Feed strict, typed domain context directly into your AI tooling to eliminate hallucinations and rapidly provision secure user interfaces and zero-trust backend infrastructure.</p>
+  </div>
+
+  <div className="sb-section">
+    <div className="sb-features-grid">
+      
+      <div className="sb-grid-item">
+        <img src={AiCover} alt="Representation of Generative AI UI components" />
+        <h4 className="sb-section-item-heading">AI Components</h4>
+        <p className="sb-section-item-paragraph">Bridge the gap between language models and the DOM to seamlessly render context-aware, generative user interfaces. Eliminate frontend boilerplate with purpose-built components engineered to natively handle real-time data streaming, dynamic state mutations, and complex autonomous workflows right out of the box.</p>
+        <a
+          className="sb-action-link"
+          href="/?path=/docs/components-ai--docs"
+        >Explore AI Components<RightArrow /></a>
+      </div>
+
+      <div className="sb-grid-item">
+        <img src={DataControls} alt="High-density data tables and forms" />
+        <h4 className="sb-section-item-heading">UI & Data Controls</h4>
+        <p className="sb-section-item-paragraph">Command your application's data layer with precision using a comprehensive suite of resilient, highly accessible components engineered for enterprise scale. Master high-density interfaces from advanced temporal forms to high-throughput interactive tables without ever compromising on performance or a flawless user experience.</p>
+        <a
+          className="sb-action-link"
+          href="/?path=/docs/components-data--docs"
+        >Browse UI Controls<RightArrow /></a>
+      </div>
+
+      <div className="sb-grid-item">
+        <img src={McpContext} alt="Model Context Protocol architecture diagram" />
+        <h4 className="sb-section-item-heading">Model Context Protocol</h4>
+        <p className="sb-section-item-paragraph">Eliminate LLM hallucinations by injecting enterprise-grade architectural context and strict domain constraints directly into your local development environment. Empower your autonomous AI agents to rapidly and reliably generate secure, zero-trust backend infrastructure alongside predictable, production-ready frontend code with absolute precision.</p>
+        <a
+          className="sb-action-link"
+          href="/?path=/docs/architecture-mcp--docs"
+        >Connect Your IDE<RightArrow /></a>
+      </div>
+
+      <div className="sb-grid-item">
+        <img src={McpContext} alt="Representation of Backend Integrations and AI Platforms" />
+        <h4 className="sb-section-item-heading">Backend MCP Templates</h4>
+        <p className="sb-section-item-paragraph">Empower frameworks from LangChain and VercelAI to Amazon Bedrock, SageMaker, N8N, Watsonx, and xAI with instant architectural context. Accelerate your build cycles leveraging ready-to-deploy backend blueprints for Authentication, Billing, Logging, Notifications, eCommerce, Storage, AI Integration and strict error handling paradigms.</p>
+        <a
+          className="sb-action-link"
+          href="/?path=/docs/architecture-templates--docs"
+        >Explore Template Library<RightArrow /></a>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<div className='sb-addon'>
+  <div className='sb-addon-text'>
+    <h4>Quick Start</h4>
+    <p className="sb-section-item-paragraph">Install the core Mito UI package and dependencies to unlock seamless enterprise-grade architectural domain context streaming to your IDE.</p>
+    <a
+        className="sb-action-link"
+        href="/?path=/docs/getting-started-installation--docs"
+      >View Installation Guide<RightArrow /></a>
+  </div>
+  <div className='sb-addon-img'>
+    <img src={InstallBanner} alt="Terminal window showing pnpm install command" />
+  </div>
+</div>
+
+<div className="sb-section sb-socials">
+    <div className="sb-section-item">
+      <img src={TypeScript} alt="TypeScript Logo" className="sb-explore-image"/>
+      <div>
+        <h4 className="sb-section-item-heading">Strict TypeScript</h4>
+        <p>Forged with end-to-end type safety and rich JSDocs for flawless AI comprehension.</p>
+        <a
+          className="sb-action-link"
+          href="/?path=/docs/architecture-types--docs"
+        >View the API<RightArrow /></a>
+      </div>
+    </div>
+    
+    <div className="sb-section-item">
+      <img src={Github} alt="Github logo" className="sb-explore-image"/>
+      <div>
+         <h4 className="sb-section-item-heading">GitHub Repository</h4>
+        <p>Follow the journey engineering the future of autonomous UI development.</p>
+        <a
+          className="sb-action-link"
+          href="https://github.com/emeraldemperaur/mito-ux"
+          target="_blank"
+        >Star on GitHub<RightArrow /></a>
+      </div>
+    </div>
+
+    <div className="sb-section-item">
+      <img src={NPM} alt="NPM logo" className="sb-explore-image"/>
+      <div>
+        <h4 className="sb-section-item-heading">NPM Registry</h4>
+        <p>Pull the latest production builds to instantly stream architectural blueprints.</p>
+        <a
+          className="sb-action-link"
+          href="https://www.npmjs.com/package/@emeraldemperaur/mito-ui-mcp"
+          target="_blank"
+        >Install via NPM<RightArrow /></a>
+      </div>
+    </div>
+</div>
+
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Mozilla+Headline:wght@200..700&display=swap');
+  {`
+  .sb-container {
+    margin-bottom: 48px;
+  }
+
+  .sb-section {
+    width: 100%;
+    display: flex;
+    flex-direction: row;
+    gap: 20px;
+  }
+
+  img {
+    object-fit: cover;
+    border-radius: 8px;
+  }
+
+  .sb-section-title {
+    margin-bottom: 32px;
+  }
+
+  .sb-section a:not(h1 a, h2 a, h3 a) {
+    font-size: 14px;
+  }
+
+  .sb-section-item, .sb-grid-item {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .sb-section-item-heading {
+    padding-top: 20px !important;
+    padding-bottom: 5px !important;
+    margin: 0 !important;
+    font-weight: 700;
+    
+  }
+  
+  .sb-section-item-paragraph {
+    margin: 0;
+    padding-bottom: 12px;
+    color: #666;
+    text-align: justify;
+  }
+
+  .sb-action-link {
+    text-decoration: none;
+    font-weight: 600;
+    color: #1EA7FD;
+    margin-top: auto; /* Pushes link to bottom of flex container */
+  }
+
+  .sb-action-link:hover, .sb-action-link:focus {
+    text-decoration: underline;
+    text-decoration-thickness: 0.03125rem;
+    text-underline-offset: 0.11em;
+  }
+
+  .sb-features-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    grid-gap: 40px 32px;
+  }
+
+  .sb-socials {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    margin-top: 32px;
+    padding-top: 32px;
+    border-top: 1px solid rgba(0,0,0,0.1);
+  }
+
+  .sb-socials p {
+    margin-bottom: 10px;
+    color: #666;
+    font-size: 14px;
+  }
+
+  .sb-explore-image {
+    max-height: 32px;
+    align-self: flex-start;
+    margin-bottom: 8px;
+  }
+
+  .sb-addon {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    position: relative;
+    border-radius: 12px;
+    border: 1px solid rgba(0, 0, 0, 0.05);
+    background: #F8F9FA;
+    height: 200px;
+    margin-bottom: 48px;
+    overflow: hidden;
+    box-shadow: inset 2px 2px 5px rgba(0,0,0,0.02), inset -2px -2px 5px rgba(255,255,255,0.5); /* Subtle neumorphic nod */
+  }
+
+  .sb-addon-text {
+    padding-left: 48px;
+    max-width: 300px;
+    z-index: 2;
+  }
+
+  .sb-addon-text h4 {
+    padding-top: 0px;
+    margin-bottom: 8px;
+  }
+
+  .sb-addon-img {
+    position: absolute;
+    left: 420px;
+    top: 0;
+    height: 100%;
+    width: 200%;
+    overflow: hidden;
+    z-index: 1;
+  }
+
+  .sb-addon-img img {
+    width: 650px;
+    transform: rotate(-5deg);
+    margin-left: 40px;
+    margin-top: -20px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+    backface-visibility: hidden;
+    border-radius: 12px;
+  }
+
+  @media screen and (max-width: 800px) {
+    .sb-addon-img {
+      left: 300px;
+    }
+  }
+
+  @media screen and (max-width: 600px) {
+    .sb-section {
+      flex-direction: column;
+    }
+
+    .sb-features-grid {
+      grid-template-columns: repeat(1, 1fr);
+    }
+
+    .sb-socials {
+      grid-template-columns: repeat(1, 1fr);
+      gap: 32px;
+    }
+
+    .sb-addon {
+      height: 320px;
+      align-items: flex-start;
+      padding-top: 32px;
+      overflow: hidden;
+    }
+
+    .sb-addon-text {
+      padding-left: 24px;
+    }
+
+    .sb-addon-img {
+      right: 0;
+      left: 0;
+      top: 150px;
+      bottom: 0;
+      overflow: hidden;
+      height: auto;
+      width: 124%;
+    }
+
+    .sb-addon-img img {
+      width: 1200px;
+      transform: rotate(-10deg);
+      margin-left: -24px;
+    }
+  }
+  `}
+</style>
