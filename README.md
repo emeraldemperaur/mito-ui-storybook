@@ -11,7 +11,7 @@ Access to the core source code is currently restricted.
 <a href="https://www.github.com/emeraldemperaur/mito-ui" target="_blank">Mito UI Repository</a>
 
 ## Quick Start
-<p align='justify'>Read the <a href="#" target="_blank">official Mito UI documentation</a> for comprehensive guides on React primitives, backend architectural blueprints and MCP server deployment.</p>
+<p align='justify'>Read the <a href="https://6a657230d0c8812ee04774fc-jnfasftpdt.chromatic.com/" target="_blank">official Mito UI documentation</a> for comprehensive guides on React primitives, backend architectural blueprints and MCP server deployment.</p>
 
 ## Usage
 
