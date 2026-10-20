@@ -1,0 +1,40 @@
+import { Meta } from "@storybook/addon-docs/blocks";
+
+<Meta title="Model Context Protocol" />
+
+# Model Context Protocol (MCP)
+
+Mito's zero-trust MCP server strictly governs how large language models interact with your codebase, feeding them deterministic structural guidelines to entirely eliminate UI hallucinations.
+
+## Core Capabilities
+
+* **Context Streaming:** Injects enterprise React patterns directly into Cursor or Windsurf.
+* **Component Awareness:** Forces the LLM to utilize your custom `uiComponentView` primitives rather than hallucinating generic HTML.
+* **Security Boundaries:** Enforces strict role-based access controls and prevents the LLM from executing unauthorized data mutations.
+
+## Remote Implementation
+
+For cloud-hosted agentic environments, configure the SSE transport layer:
+
+```json
+"mcpServers": {
+  "mito-remote": {
+    "url": "[https://api.yourdomain.com/mcp](https://api.yourdomain.com/mcp)",
+    "transport": "sse",
+    "auth": "Bearer <YOUR_MITO_LICENSE_KEY>"
+  }
+}
+```
+
+## Local Implementation (stdio)
+
+To enable structural context streaming directly within your local IDE (Cursor, Windsurf, etc.), configure the standard I/O (stdio) transport layer:
+
+```json
+"mcpServers": {
+  "mito-local": {
+    "command": "npx",
+    "args": ["-y", "@mito/mcp-server", "--transport", "stdio"]
+  }
+}
+```

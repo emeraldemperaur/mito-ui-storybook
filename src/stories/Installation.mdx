@@ -1,0 +1,46 @@
+import { Meta } from "@storybook/addon-docs/blocks";
+
+<Meta title="Installation" />
+
+# Installation & Initialization
+
+Deploy Mito UI into your enterprise React architecture to instantly provision zero-trust components and autonomous agent context streaming.
+
+## 1. Install Dependencies
+
+Install the core component library and the MCP server via your preferred package manager:
+
+```bash
+npm install @mito/ui-components @mito/mcp-core
+```
+
+
+## 2. Configure the MCP Server
+ 
+To enable structural context streaming for your local AI agents (Cursor, Windsurf, etc.), add the Mito local transport to your IDE's MCP configuration file:
+
+```json
+"mcpServers": {
+  "mito-local": {
+    "command": "npx",
+    "args": ["-y", "@mito/mcp-server", "--transport", "stdio"]
+  }
+}
+```
+ 
+## 3. Theme Provider Setup
+
+Wrap your application root to establish the global enterprise UI styling context:
+ 
+```typescript
+import { MitoProvider } from '@mito/ui-components';
+
+const App = () => {
+  return (
+    <MitoProvider theme="dark">
+      <YourAppRoutes/>
+    </MitoProvider>
+  );
+};
+```
+ 

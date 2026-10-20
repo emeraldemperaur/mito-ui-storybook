@@ -1,0 +1,69 @@
+@layer radix, custom;
+
+@import "@radix-ui/themes/styles.css" layer(radix);
+
+@layer custom {  
+  $text-main: #333333;
+  $neumorphic-bg: #e0e5ec;
+  $neumorphic-shadow-dark: #b8b9be;
+  $neumorphic-shadow-light: #ffffff;
+  $font-primary: 'Montserrat', sans-serif;
+
+  :root {
+    --text-main-color: #{$text-main}; 
+    --mito-neumorphic-bg: #{$neumorphic-bg};
+  }
+
+  .core-input-label {
+    text-align: start;
+  }
+
+  .core-input-label-error {
+    margin-bottom: 13px;
+    font-family: $font-primary;
+    color: #800020; 
+    font-weight: 500;
+    font-size: 0.8rem;
+    letter-spacing: 0.13em;
+  }
+
+  .core-input-section-ribbon {
+    border-radius: 0px;
+    margin-top: 33px;
+    margin-bottom: 33px;
+  }
+
+  .core-input-section-text {
+    font-family: $font-primary !important;
+    font-weight: 400;
+    letter-spacing: 0.33em;
+    margin-left: 13px;
+    padding-top: 3px;
+    padding-bottom: 3px;
+    text-align: left;
+  }
+
+  .input-material {
+    background-color: transparent !important;
+    box-shadow: none !important;
+    border-radius: 0 !important;
+    border-bottom: 2px solid var(--gray-6) !important;
+    
+    &:focus-within {
+      border-bottom-color: var(--accent-9) !important;
+    }
+  }
+
+  .input-neumorphic {
+    border: none !important;
+    border-radius: 12px !important;
+    background: $neumorphic-bg !important; 
+    box-shadow: 5px 5px 10px $neumorphic-shadow-dark, -5px -5px 10px $neumorphic-shadow-light !important;
+
+    &:focus-within {
+      box-shadow: 
+        inset 5px 5px 10px $neumorphic-shadow-dark, 
+        inset -5px -5px 10px $neumorphic-shadow-light !important;
+    }
+  }
+}

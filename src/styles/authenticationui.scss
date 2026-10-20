@@ -1,0 +1,336 @@
+/* Base Reset & Variables Setup */
+.universal-auth-root {
+  width: 100%;
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: var(--auth-bg);
+  color: var(--auth-text);
+  font-family: var(--auth-font);
+  transition: background-color 0.3s ease, color 0.3s ease;
+  box-sizing: border-box;
+}
+
+.universal-auth-root *, .universal-auth-root *::before, .universal-auth-root *::after {
+  box-sizing: inherit;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  border: 0;
+}
+
+/* ========================================================
+   DESIGN SYSTEM VARIANTS (Inputs & Buttons)
+   ======================================================== */
+
+.auth-field-group {
+  margin-bottom: 20px;
+  width: 100%;
+  position: relative;
+}
+
+.auth-input {
+  width: 100%;
+  font-family: var(--auth-font);
+  font-size: 15px;
+  background: transparent;
+  color: var(--auth-text);
+  transition: all 0.3s ease;
+}
+
+.auth-input:focus {
+  outline: none;
+}
+
+.auth-password-wrapper {
+  position: relative;
+}
+
+.auth-password-toggle {
+  position: absolute;
+  right: 15px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  color: var(--auth-text-muted);
+  cursor: pointer;
+}
+
+.auth-submit-btn, .auth-toggle-btn {
+  width: 100%;
+  padding: 15px;
+  font-family: var(--auth-font);
+  font-weight: 600;
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: block;
+  margin: 15px auto;
+  text-align: center;
+}
+
+/* 1. MATERIAL VARIANT */
+.auth-input.variant-material {
+  border: none;
+  border-bottom: 1px solid var(--auth-text-muted);
+  padding: 10px 5px;
+  border-radius: 0;
+}
+.auth-input.variant-material:focus {
+  border-bottom-color: var(--auth-primary);
+}
+.auth-submit-btn.variant-material {
+  background: var(--auth-primary);
+  color: #fff;
+  border: none;
+  box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+}
+.auth-toggle-btn.variant-material {
+  background: transparent;
+  border: 1px solid var(--auth-primary);
+  color: var(--auth-primary);
+}
+
+/* 2. OUTLINE VARIANT */
+.auth-input.variant-outline {
+  border: 2px solid var(--auth-text-muted);
+  padding: 12px 15px;
+  border-radius: 8px;
+}
+.auth-input.variant-outline:focus {
+  border-color: var(--auth-primary);
+}
+.auth-submit-btn.variant-outline {
+  background: transparent;
+  border: 2px solid var(--auth-primary);
+  color: var(--auth-primary);
+  border-radius: 8px;
+}
+.auth-submit-btn.variant-outline:hover {
+  background: var(--auth-primary);
+  color: #fff;
+}
+.auth-toggle-btn.variant-outline {
+  background: transparent;
+  border: 2px solid var(--auth-text-muted);
+  color: var(--auth-text);
+  border-radius: 8px;
+}
+
+/* 3. NEUMORPHIC VARIANT (Smart Adaptive Shadows) */
+.mode-light .variant-neumorphic {
+  --neu-shadow-1: 6px 6px 12px rgba(163, 177, 198, 0.6);
+  --neu-shadow-2: -6px -6px 12px rgba(255, 255, 255, 0.8);
+  --neu-inner-1: inset 4px 4px 8px rgba(163, 177, 198, 0.6);
+  --neu-inner-2: inset -4px -4px 8px rgba(255, 255, 255, 0.8);
+}
+.mode-dark .variant-neumorphic {
+  --neu-shadow-1: 6px 6px 12px rgba(0, 0, 0, 0.8);
+  --neu-shadow-2: -6px -6px 12px rgba(45, 45, 45, 0.4);
+  --neu-inner-1: inset 4px 4px 8px rgba(0, 0, 0, 0.8);
+  --neu-inner-2: inset -4px -4px 8px rgba(45, 45, 45, 0.4);
+}
+
+.auth-input.variant-neumorphic {
+  border: none;
+  padding: 15px;
+  border-radius: 12px;
+  background: var(--auth-bg);
+  box-shadow: var(--neu-inner-1), var(--neu-inner-2);
+}
+.auth-submit-btn.variant-neumorphic, .auth-toggle-btn.variant-neumorphic {
+  border: none;
+  border-radius: 12px;
+  background: var(--auth-bg);
+  color: var(--auth-primary);
+  box-shadow: var(--neu-shadow-1), var(--neu-shadow-2);
+}
+.auth-submit-btn.variant-neumorphic:active, .auth-toggle-btn.variant-neumorphic:active {
+  box-shadow: var(--neu-inner-1), var(--neu-inner-2);
+}
+
+/* Errors & Utils */
+.auth-error {
+  color: #D32F2F;
+  font-size: 13px;
+  margin-bottom: 15px;
+  text-align: center;
+  font-weight: 600;
+}
+.auth-title {
+  text-align: center;
+  font-size: 33px;
+  font-weight: 300;
+  margin-bottom: 40px;
+  letter-spacing: 0.1em;
+}
+
+
+/* ========================================================
+   LAYOUT 1: CHAIMARA (Split Screen)
+   ======================================================== */
+.chaimara-container {
+  width: 100%;
+  max-width: 1050px;
+  height: 600px;
+  background: var(--auth-bg);
+  box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+  display: flex;
+  overflow: hidden;
+}
+.chaimara-box {
+  display: flex;
+  width: 100%;
+  height: 100%;
+}
+.chaimara-left {
+  width: 45%;
+  padding: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.chaimara-form {
+  width: 100%;
+  max-width: 320px;
+}
+.chaimara-right {
+  width: 55%;
+  background-size: cover;
+  background-position: center;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.chaimara-right::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(212deg, rgba(0,0,0,0.7) 0%, rgba(32,32,32,0.7) 100%);
+}
+.chaimara-brand-content {
+  position: relative;
+  z-index: 2;
+  text-align: center;
+  color: #ffffff;
+}
+.chaimara-logo-text {
+  font-size: 50px;
+  font-family: 'Cinzel', serif;
+  margin-bottom: 20px;
+}
+.chaimara-logo-img {
+  width: 150px;
+  margin-top: 15px;
+}
+
+@media (max-width: 800px) {
+  .chaimara-box { flex-direction: column; }
+  .chaimara-left, .chaimara-right { width: 100%; }
+  .chaimara-container { height: auto; min-height: 100vh; }
+  .chaimara-right { padding: 50px 0; }
+}
+
+
+/* ========================================================
+   LAYOUT 2: PROMETHEUS (3D Animated Box)
+   ======================================================== */
+.prometheus-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+  padding: 20px;
+}
+.prometheus-header {
+  text-align: center;
+  margin-bottom: 40px;
+}
+
+.ost-container {
+  position: relative;
+  width: 100%;
+  max-width: 600px;
+  height: 350px;
+  transition: all 0.5s ease;
+}
+
+.ost-box {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  z-index: 1;
+}
+.ost-box::before, .ost-box::after {
+  content: "";
+  position: absolute;
+  background-color: var(--auth-primary);
+  transform: rotateX(52deg) rotateY(15deg) rotateZ(-38deg);
+  width: 300px;
+  height: 285px;
+  left: 150px;
+  top: 50px;
+  transition: all 0.5s ease;
+}
+.ost-box::after {
+  background-color: rgba(0,0,0,0.8);
+  top: -10px;
+  left: 80px;
+  width: 320px;
+  height: 180px;
+}
+
+.ost-forms {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  width: 100%;
+  height: 100%;
+}
+.ost-info-panel {
+  display: flex;
+  width: 100%;
+  justify-content: space-between;
+  padding: 0 40px;
+  align-items: center;
+  color: var(--auth-text);
+}
+.ost-info-panel .info-item {
+  width: 45%;
+  text-align: center;
+}
+
+.ost-active-form {
+  position: absolute;
+  width: 320px;
+  background: var(--auth-bg);
+  padding: 30px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+  transition: all 0.5s ease;
+  top: 50%;
+  transform: translateY(-50%);
+  border-radius: 12px;
+}
+
+/* Animations based on state */
+.ost-container.mode-login .ost-active-form { left: 50px; }
+.ost-container.mode-signup .ost-active-form { right: 50px; }
+.ost-container.mode-signup .ost-box::before { left: 180px; height: 265px; }
+
+@media (max-width: 650px) {
+  .ost-box { display: none; }
+  .ost-container { height: auto; }
+  .ost-info-panel { flex-direction: column; padding: 20px 0; }
+  .ost-active-form { position: relative; margin: 20px auto; left: 0 !important; right: 0 !important; transform: none; }
+}

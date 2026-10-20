@@ -13,8 +13,20 @@
     "chromatic": "npx chromatic --project-token=chpt_69cd32c4dca9fd4"
   },
   "dependencies": {
+    "@radix-ui/react-accordion": "^1.2.20",
+    "@radix-ui/react-icons": "^1.3.2",
+    "@radix-ui/react-slot": "^1.3.3",
+    "@radix-ui/themes": "^3.3.0",
+    "@react-icons/all-files": "^4.1.0",
+    "card-validator": "^10.0.4",
+    "country-flag-icons": "^1.6.20",
+    "formik": "^2.4.9",
     "react": "^19.2.7",
-    "react-dom": "^19.2.7"
+    "react-datepicker": "^9.1.0",
+    "react-dom": "^19.2.7",
+    "react-imask": "^7.6.1",
+    "react-phone-number-input": "^3.4.17",
+    "yup": "^1.7.1"
   },
   "devDependencies": {
     "@chromatic-com/storybook": "^5.2.1",
@@ -24,6 +36,7 @@
     "@storybook/addon-mcp": "^0.1.3",
     "@storybook/addon-vitest": "^10.5.2",
     "@storybook/react-vite": "^10.5.2",
+    "@storybook/test": "^8.6.15",
     "@types/node": "^24.13.2",
     "@types/react": "^19.2.17",
     "@types/react-dom": "^19.2.3",
@@ -37,6 +50,7 @@
     "eslint-plugin-storybook": "^10.5.2",
     "globals": "^17.7.0",
     "playwright": "^1.61.1",
+    "sass": "^1.102.0",
     "storybook": "^10.5.2",
     "typescript": "~6.0.2",
     "typescript-eslint": "^8.62.0",
