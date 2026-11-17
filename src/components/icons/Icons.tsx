@@ -22,7 +22,7 @@ import {
   DesktopIcon, LaptopIcon, MobileIcon, EnterFullScreenIcon, ExitFullScreenIcon, ChatBubbleIcon,
   FileTextIcon, CheckboxIcon, TableIcon, CopyIcon, EnterIcon, EyeNoneIcon, ChevronUpIcon, 
   ChevronLeftIcon, ChevronRightIcon, FaceIcon, FontFamilyIcon, VideoIcon, ShuffleIcon, 
-  LoopIcon, MixIcon, HeadingIcon 
+  LoopIcon, MixIcon, HeadingIcon, ExclamationTriangleIcon 
 } from '@radix-ui/react-icons';
 import { ChevronDownIcon } from "@radix-ui/themes";
 
@@ -158,6 +158,7 @@ const iconMap = {
   shuffle: ShuffleIcon,
   loop: LoopIcon,
   heading: HeadingIcon,
+  error: ExclamationTriangleIcon
 } as const;
 
 /**

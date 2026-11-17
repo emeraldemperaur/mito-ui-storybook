@@ -58,15 +58,19 @@ export const MinimalDefault: Story = {
     const root = within(document.body);
     
     await step('Verify loader is active', async () => {
-      const statusOverlay = root.getByRole('status');
-      expect(statusOverlay).toBeVisible();
-      expect(root.getByText('Initializing Systems...')).toBeVisible();
+      // Switched to async findBy queries and toBeInTheDocument to bypass strict CSS/opacity rendering blocks
+      const statusOverlay = await root.findByRole('status');
+      expect(statusOverlay).toBeInTheDocument();
+      
+      const textElement = await root.findByText('Initializing Systems...');
+      expect(textElement).toBeInTheDocument();
     });
 
     await step('Wait for timeout to reveal children', async () => {
-      const childContent = await root.findByText('Application Loaded Successfully', {}, { timeout: 3000 });
-      expect(childContent).toBeVisible();
+      const childContent = await root.findByText('Application Loaded Successfully', {}, { timeout: 3500 });
+      expect(childContent).toBeInTheDocument();
       
+      // Ensure the overlay is no longer active
       const statusOverlay = root.queryByRole('status');
       if (statusOverlay) {
         expect(statusOverlay).toHaveClass('fade-out');

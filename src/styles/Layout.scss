@@ -1,0 +1,38 @@
+/* =========================================
+   MITO UI: LAYOUT PRIMITIVES
+   ========================================= */
+
+/* --- Container --- */
+.mito-container-fixed,
+.mito-container-fluid {
+  box-sizing: border-box;
+  background-color: var(--mito-container-bg-light, transparent);
+  transition: background-color 0.3s ease;
+}
+
+:global(.dark) .mito-container-fixed,
+:global(.dark) .mito-container-fluid,
+[data-theme="dark"] .mito-container-fixed,
+[data-theme="dark"] .mito-container-fluid {
+  background-color: var(--mito-container-bg-dark, var(--mito-container-bg-light, transparent));
+}
+
+/* --- Row --- */
+.mito-layout-row {
+  display: grid !important; 
+  grid-template-columns: repeat(12, minmax(0, 1fr)) !important; 
+  width: 100%;
+  box-sizing: border-box;
+}
+
+/* --- Column --- */
+.mito-layout-col {
+  box-sizing: border-box;
+  grid-column: var(--col-initial, span 12); 
+}
+
+@media (min-width: 520px) { .mito-layout-col { grid-column: var(--col-xs, var(--col-initial, span 12)); } }
+@media (min-width: 768px) { .mito-layout-col { grid-column: var(--col-sm, var(--col-xs, var(--col-initial, span 12))); } }
+@media (min-width: 1024px) { .mito-layout-col { grid-column: var(--col-md, var(--col-sm, var(--col-xs, var(--col-initial, span 12)))); } }
+@media (min-width: 1280px) { .mito-layout-col { grid-column: var(--col-lg, var(--col-md, var(--col-sm, var(--col-xs, var(--col-initial, span 12))))); } }
+@media (min-width: 1640px) { .mito-layout-col { grid-column: var(--col-xl, var(--col-lg, var(--col-md, var(--col-sm, var(--col-xs, var(--col-initial, span 12)))))); } }
