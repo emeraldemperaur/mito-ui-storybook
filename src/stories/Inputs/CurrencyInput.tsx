@@ -1,7 +1,7 @@
 "use client";
 
-import React, { useRef, useState, useEffect, type JSX, useId } from "react";
-import { useFormikContext, getIn, type FormikContextType } from "formik";
+import React, { useRef, useState, useEffect, type JSX, useId, useContext } from "react";
+import { getIn, type FormikContextType, FormikContext } from "formik";
 import * as TooltipPrimitive from '@radix-ui/react-tooltip';
 import * as SelectPrimitive from '@radix-ui/react-select';
 import { IMaskInput } from 'react-imask';
@@ -213,13 +213,11 @@ export const CurrencyInput = React.forwardRef<HTMLInputElement, CurrencyInputPro
   const internalId = useId();
   const inputId = `${alias}-input-${internalId}`;
 
-  const fallbackContext = useFormikContext<any>();
+  const fallbackContext = useContext(FormikContext) as FormikContextType<any> | undefined;
   const activeContext = formikContext || fallbackContext;
-  
-  // Hybrid State Engine: Use Formik if available, else fallback to standard controlled props
-  const isFormik = Boolean(activeContext);
   const currencyAlias = `${alias}Currency`; 
-  
+  // Hybrid State Engine: Use Formik if available, else fallback to standard controlled props
+  const isFormik = activeContext !== undefined && typeof activeContext.setFieldValue === 'function';
   const fieldValue = isFormik ? getIn(activeContext.values, alias) : value;
   const fieldError = isFormik ? getIn(activeContext.errors, alias) : null;
   const fieldTouched = isFormik ? getIn(activeContext.touched, alias) : null;
@@ -665,7 +663,6 @@ export const CurrencyInput = React.forwardRef<HTMLInputElement, CurrencyInputPro
             {...({
               mask: Number,
               scale: activeCurrency.scale,
-              signed: false,
               thousandsSeparator: ",",
               padFractionalZeros: true,
               normalizeZeros: true,

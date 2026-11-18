@@ -622,7 +622,7 @@ export const StandaloneKYCExample = () => {
  * Demonstrates the seamless binding of `FileInput` inside a `Formik` context. 
  * Formik captures the JavaScript `File` objects directly into the global validation state, enabling size or type validation via Yup before submission.
  */
-export const FormikIntegration: Story = {
+export const InteractiveFormTest: Story = {
   render: (args) => {
     return (
       <Formik

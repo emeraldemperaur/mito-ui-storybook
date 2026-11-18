@@ -1,5 +1,5 @@
-import type { ReactNode } from "react";
-import { type FormikContextType } from "formik";
+import { useContext, type ReactNode } from "react";
+import { FormikContext, type FormikContextType } from "formik";
 
 export type InputDesign = 'material' | 'outline' | 'neumorphic';
 
@@ -134,3 +134,14 @@ export const sharedInputStyles = `
   .v-input-label { font-size: 13px; font-weight: 600; color: var(--gray-12); display: flex; align-items: center; gap: 6px; }
   .v-input-error { font-size: 12px; font-weight: 500; color: var(--red-9); margin-top: 4px; }
 `;
+
+/**
+ * Safely resolves an explicitly injected Formik context or an ancestor <Formik> provider
+ * without emitting dev-mode console warnings when rendered standalone.
+ */
+export function useOptionalFormik<T = any>(
+  explicitContext?: FormikContextType<T>
+): FormikContextType<T> | undefined {
+  const inheritedContext = useContext(FormikContext);
+  return explicitContext || inheritedContext || undefined;
+}

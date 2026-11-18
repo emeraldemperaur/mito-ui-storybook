@@ -1,17 +1,17 @@
 "use client";
 
 import React from 'react';
-import { Box, Container as RadixContainer } from '@radix-ui/themes';
-import type { ContainerProps as RadixContainerProps } from '@radix-ui/themes';
+import { Slot } from '@radix-ui/react-slot';
 import { FormikProvider, type FormikContextType } from 'formik';
 import { useGlobalUIContext, type ThemeColors } from './GlobalUIContext';
 import '../../styles/Layout.scss';
 
 /**
  * @interface ContainerProps
- * @description Attributes for the primary layout boundary.
+ * @description Attributes for the primary layout boundary. Replaces Radix ContainerProps 
+ * with native HTML attributes to ensure theme-agnostic stability.
  */
-export interface ContainerProps extends RadixContainerProps, React.AriaAttributes {
+export interface ContainerProps extends Omit<React.HTMLAttributes<HTMLDivElement>, 'color'> {
     /** 
      * @description Enables fluid width (100% of parent) instead of snapping to fixed breakpoints. 
      * Ensures edge-to-edge layout rendering.
@@ -19,6 +19,18 @@ export interface ContainerProps extends RadixContainerProps, React.AriaAttribute
      */
     fluid?: boolean;
     
+    /**
+     * @description Maximum width constraint based on Radix scaling.
+     * 1: 448px, 2: 688px, 3: 896px, 4: 1136px
+     * @default "4"
+     */
+    size?: "1" | "2" | "3" | "4";
+
+    /**
+     * @description Standard CSS display property override.
+     */
+    display?: string;
+
     /** 
      * @description Delegates rendering to the immediate child element via Radix Slot. 
      * @default false
@@ -48,10 +60,19 @@ export interface ContainerProps extends RadixContainerProps, React.AriaAttribute
     children: React.ReactNode;
 }
 
+// Maps Radix container sizes to native CSS max-widths
+const CONTAINER_SIZES: Record<string, string> = {
+    "1": "448px",
+    "2": "688px",
+    "3": "896px",
+    "4": "1136px"
+};
+
 /**
  * @component Container
  * @description Primary layout bounding box. Supports SSR asChild composition, 
  * WCAG landmarks, localized theme injection, and optional Formik state boundaries.
+ * 100% self-contained without Radix Theme dependencies.
  */
 export const Container = React.forwardRef<HTMLDivElement, ContainerProps>(({ 
     fluid, 
@@ -61,11 +82,12 @@ export const Container = React.forwardRef<HTMLDivElement, ContainerProps>(({
     formikContext,
     style,
     display, 
-    size,  
+    size = "4",  
     className,  
     ...props 
 }, ref) => {
     const context = useGlobalUIContext();
+    const Component = asChild ? Slot : "div";
     
     const activeLightColor = themeOverrides?.light || context.themeColors?.light;
     const activeDarkColor = themeOverrides?.dark || context.themeColors?.dark;
@@ -74,6 +96,10 @@ export const Container = React.forwardRef<HTMLDivElement, ContainerProps>(({
         ...style,
         ...(activeLightColor ? { '--mito-container-bg-light': activeLightColor } : {}),
         ...(activeDarkColor ? { '--mito-container-bg-dark': activeDarkColor } : {}),
+        // Replicates Radix `px="4"` logic directly via padding
+        paddingLeft: 'var(--space-4, 16px)',
+        paddingRight: 'var(--space-4, 16px)',
+        ...(display ? { display } : {})
     };
 
     let content = children;
@@ -86,36 +112,37 @@ export const Container = React.forwardRef<HTMLDivElement, ContainerProps>(({
 
     if (fluid) {
         return (
-            <Box 
+            <Component 
                 ref={ref} 
-                width="100%" 
-                maxWidth="100%"
-                px="4" 
-                asChild={asChild} 
                 role={role} 
-                style={dynamicStyles} 
-                display={display as any} 
+                style={{ 
+                    ...dynamicStyles, 
+                    width: '100%', 
+                    maxWidth: '100%' 
+                }} 
                 className={`mito-container-fluid ${className || ""}`}
                 {...props}
             >
                 {content}
-            </Box>
+            </Component>
         );
     }
 
     return (
-        <RadixContainer 
+        <Component 
             ref={ref} 
-            size={size || "4"} 
-            px="4" 
-            asChild={asChild} 
-            style={dynamicStyles} 
-            display={display}
+            role={role}
+            style={{ 
+                ...dynamicStyles, 
+                width: '100%',
+                maxWidth: CONTAINER_SIZES[size] || CONTAINER_SIZES["4"],
+                margin: '0 auto' 
+            }} 
             className={`mito-container-fixed ${className || ""}`}
             {...props}
         >
             {content}
-        </RadixContainer>
+        </Component>
     );
 });
 

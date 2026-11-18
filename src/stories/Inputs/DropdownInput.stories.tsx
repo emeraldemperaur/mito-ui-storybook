@@ -739,7 +739,7 @@ export const StandaloneDropdownExample = () => {
  * Demonstrates the seamless binding of `DropdownInput` inside a `Formik` context. 
  * Formik captures the `optionvalue` string directly into the global validation state when an option is selected.
  */
-export const FormikIntegration: Story = {
+export const InteractiveFormTest: Story = {
   render: (args) => {
     return (
       <Formik

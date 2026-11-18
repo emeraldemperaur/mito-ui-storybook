@@ -2,7 +2,7 @@
 
 import React, { useRef, useState, useEffect, useMemo, createContext, useContext, type JSX, useId } from 'react';
 import { Slot } from '@radix-ui/react-slot';
-import { useFormikContext, getIn } from 'formik';
+import { getIn, FormikContext, type FormikContextType } from 'formik';
 import { getNearestParentBackground } from "../../utils/Vinci";
 import { type BaseInputProps } from "../Inputs/types";
 import '../../styles/Button.scss';
@@ -105,10 +105,32 @@ export interface ButtonGroupRootProps extends Omit<BaseInputProps, 'design'> {
   children: React.ReactNode;
 }
 
-export interface ButtonGroupItemProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
+/**
+ * @interface ButtonGroupItemProps
+ * @description Strongly-typed attributes for individual items within a ButtonGroup.
+ * Extends standard HTML button attributes while intercepting custom behavioral props.
+ */
+export interface ButtonGroupItemProps extends Omit<React.ButtonHTMLAttributes<HTMLButtonElement>, "value"> {
+  /** 
+   * @description The unique identifier or underlying data value associated with this button item.
+   * Used by the parent ButtonGroup to track active selection state.
+   */
   value: string | number;
+  
+  /** 
+   * @description Delegates rendering to the immediate child element via Radix Slot. 
+   * @default false
+   */
   asChild?: boolean;
+  
+  /** 
+   * @description Custom callback fired when the user's pointer hovers over the item.
+   */
   onHover?: (e: React.MouseEvent<HTMLButtonElement>) => void;
+  
+  /** 
+   * @description Custom callback fired when the item is pressed and held for an extended duration.
+   */
   onLongClick?: (e: React.MouseEvent<HTMLButtonElement> | React.TouchEvent<HTMLButtonElement>) => void;
 }
 
@@ -169,13 +191,14 @@ const ButtonGroupRoot = React.forwardRef<HTMLDivElement, ButtonGroupRootProps>((
   const [neuVars, setNeuVars] = useState<React.CSSProperties>({});
   const themeClass = darkMode ? 'v-btn-group-dark' : '';
 
-  const fallbackContext = useFormikContext<any>();
+  const fallbackContext = useContext(FormikContext) as FormikContextType<any> | undefined;
   const activeContext = formikContext || fallbackContext;
-  const isFormik = Boolean(activeContext);
-
-  const fieldValue = isFormik && alias ? getIn(activeContext.values, alias) : value;
-  const fieldTouched = isFormik && alias ? getIn(activeContext.touched, alias) : null;
-  const fieldError = isFormik && alias ? getIn(activeContext.errors, alias) : null;
+    
+  // Hybrid State Engine: Use Formik if available, else fallback to standard controlled props
+  const isFormik = activeContext !== undefined && typeof activeContext.setFieldValue === 'function';
+  const fieldValue = isFormik ? getIn(activeContext!.values, alias) : value;
+  const fieldError = isFormik ? getIn(activeContext!.errors, alias) : null;
+  const fieldTouched = isFormik ? getIn(activeContext!.touched, alias) : null;
   const hasError = Boolean((fieldTouched && fieldError) || errorText);
 
   const selectedValues: (string | number)[] = useMemo(() => {
@@ -218,8 +241,8 @@ const ButtonGroupRoot = React.forwardRef<HTMLDivElement, ButtonGroupRootProps>((
 
     const payload = multiselect ? newValues : newValues[0];
     if (isFormik && alias) {
-      activeContext.setFieldValue(alias, payload);
-      setTimeout(() => activeContext.setFieldTouched(alias, true, false), 0);
+      activeContext!.setFieldValue(alias, payload);
+      setTimeout(() => activeContext!.setFieldTouched(alias, true, false), 0);
     }
     if (onChange) onChange(payload);
   };
@@ -458,10 +481,10 @@ const ButtonGroupItem = React.forwardRef<HTMLButtonElement, ButtonGroupItemProps
   id,
   value,
   asChild = false,
-  className = "",
   disabled,
   onHover,
   onLongClick,
+  className = "",
   onClick,
   onMouseDown,
   onMouseUp,

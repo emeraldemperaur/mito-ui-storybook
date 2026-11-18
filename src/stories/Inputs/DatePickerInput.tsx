@@ -1,9 +1,9 @@
 "use client";
 
-import React, { useRef, useState, useEffect, type JSX, forwardRef, useId } from "react";
+import React, { useRef, useState, useEffect, type JSX, forwardRef, useId, useContext } from "react";
 import ReactDatePicker from 'react-datepicker';
 import "react-datepicker/dist/react-datepicker.css";
-import { useFormikContext, getIn, type FormikContextType } from "formik";
+import { getIn, type FormikContextType, FormikContext } from "formik";
 import * as TooltipPrimitive from '@radix-ui/react-tooltip';
 import { Icon } from "../../components/icons/Icons";
 import { Column } from "../Layout/Column"; 
@@ -139,9 +139,11 @@ export interface DatePickerInputProps extends Omit<React.InputHTMLAttributes<HTM
   onChange?: (value: any) => void;
 }
 
+// Custom Input Component injected into ReactDatePicker to match standard Mito Input architecture
 const CustomRadixInput = forwardRef<HTMLInputElement, any>((props, ref) => {
   const { radixId, radixStyle, hasError, design, icon, iconPosition, floatingLabel, isFloating, inputLabel, ...restProps } = props;
   
+  // We strip out internal DatePicker props that shouldn't touch the DOM
   const { placeholder, value, onClick, onChange, onFocus, onBlur, onKeyDown, readOnly, disabled } = restProps;
   
   const defaultIcon = props.mode === 'datetime' ? <Icon name="clock" height="16" width="16" /> : <Icon name="calendar" height="16" width="16" />;
@@ -231,14 +233,14 @@ export const DatePickerInput = React.forwardRef<any, DatePickerInputProps>(({
   const internalId = useId();
   const inputId = `${alias}-input-${internalId}`;
 
-  const fallbackContext = useFormikContext<any>();
+  const fallbackContext = useContext(FormikContext) as FormikContextType<any> | undefined;
   const activeContext = formikContext || fallbackContext;
-  
+    
   // Hybrid State Engine: Use Formik if available, else fallback to standard controlled props
-  const isFormik = Boolean(activeContext);
-  const fieldVal = isFormik ? getIn(activeContext.values, alias) : value;
-  const fieldError = isFormik ? getIn(activeContext.errors, alias) : null;
-  const fieldTouched = isFormik ? getIn(activeContext.touched, alias) : null;
+  const isFormik = activeContext !== undefined && typeof activeContext.setFieldValue === 'function';
+  const fieldValue = isFormik ? getIn(activeContext!.values, alias) : value;
+  const fieldError = isFormik ? getIn(activeContext!.errors, alias) : null;
+  const fieldTouched = isFormik ? getIn(activeContext!.touched, alias) : null;
   
   const hasError = Boolean((fieldTouched && fieldError) || errorText);
   const displayError = errorText || fieldError;
@@ -246,18 +248,18 @@ export const DatePickerInput = React.forwardRef<any, DatePickerInputProps>(({
   const isRange = mode === 'daterange';
   
   const getRangeDates = (): [Date | null, Date | null] => {
-    if (!fieldVal) return [null, null];
-    if (typeof fieldVal === 'object' && 'from' in fieldVal) {
-      return [fieldVal.from ? new Date(fieldVal.from) : null, fieldVal.to ? new Date(fieldVal.to) : null];
+    if (!fieldValue) return [null, null];
+    if (typeof fieldValue === 'object' && 'from' in fieldValue) {
+      return [fieldValue.from ? new Date(fieldValue.from) : null, fieldValue.to ? new Date(fieldValue.to) : null];
     }
-    if (Array.isArray(fieldVal)) {
-      return [fieldVal[0] ? new Date(fieldVal[0]) : null, fieldVal[1] ? new Date(fieldVal[1]) : null];
+    if (Array.isArray(fieldValue)) {
+      return [fieldValue[0] ? new Date(fieldValue[0]) : null, fieldValue[1] ? new Date(fieldValue[1]) : null];
     }
     return [null, null];
   };
 
   const [startDate, endDate] = isRange ? getRangeDates() : [null, null];
-  const standardDate = !isRange && fieldVal ? new Date(fieldVal) : null;
+  const standardDate = !isRange && fieldValue ? new Date(fieldValue) : null;
   
   // A DatePicker has a value if it has a start date (or a standard date)
   const hasValue = isRange ? startDate !== null : standardDate !== null;

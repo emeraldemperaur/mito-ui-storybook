@@ -580,7 +580,7 @@ export const StandaloneCurrencyExample = () => {
  * Demonstrates the synchronized, multi-key binding of `CurrencyInput` inside a `Formik` context. 
  * Formik captures the numerical amount (`[alias]`) and the ISO currency code (`[alias]Currency`) automatically.
  */
-export const FormikIntegration: Story = {
+export const InteractiveFormTest: Story = {
   render: (args) => {
     return (
       <Formik

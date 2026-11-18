@@ -2,7 +2,7 @@
 
 import React, { useRef, useState, useEffect, type JSX, createContext, useContext, useMemo } from "react";
 import { Slot } from '@radix-ui/react-slot';
-import { getIn, type FormikContextType } from 'formik';
+import { FormikContext, getIn, type FormikContextType } from 'formik';
 import { adjustColor, getNearestParentBackground } from "../../utils/Vinci";
 import { useGlobalUIContext, type DesignVariant } from "../Layout/GlobalUIContext";
 
@@ -240,8 +240,11 @@ const FloatingOptionsButtonRoot = React.forwardRef<HTMLDivElement, FloatingOptio
   const globalContext = useGlobalUIContext();
   const themeClass = darkMode ? 'v-fob-dark' : '';
   
-  const activeContext = formikContext || globalContext.formikContext;
-  const isFormik = Boolean(activeContext);
+  const fallbackContext = useContext(FormikContext) as FormikContextType<any> | undefined;
+  const activeContext = formikContext || fallbackContext || globalContext.formikContext;
+    
+  // Hybrid State Engine: Use Formik if available, else fallback to standard controlled props
+  const isFormik = activeContext !== undefined && typeof activeContext.setFieldValue === 'function';
   const isReadOnly = Boolean(activeContext?.isSubmitting);
 
   useEffect(() => {

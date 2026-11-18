@@ -1,7 +1,7 @@
 "use client";
 
-import React, { useRef, useState, useEffect, useMemo, type JSX, useId } from "react";
-import { useFormikContext, getIn, type FormikContextType } from "formik";
+import React, { useRef, useState, useEffect, useMemo, type JSX, useId, useContext } from "react";
+import { getIn, type FormikContextType, FormikContext } from "formik";
 import * as TooltipPrimitive from '@radix-ui/react-tooltip';
 import * as PopoverPrimitive from '@radix-ui/react-popover';
 import { getCountries } from 'react-phone-number-input/input';
@@ -226,14 +226,14 @@ export const CountrySelectInput = React.forwardRef<HTMLButtonElement, CountrySel
   const internalId = useId();
   const inputId = `${alias}-input-${internalId}`;
 
-  const fallbackContext = useFormikContext<any>();
-  const activeContext = formikContext || fallbackContext;
-  
-  // Hybrid State Engine: Use Formik if available, else fallback to standard controlled props
-  const isFormik = Boolean(activeContext);
-  const fieldValue = isFormik ? getIn(activeContext.values, alias) : value;
-  const fieldError = isFormik ? getIn(activeContext.errors, alias) : null;
-  const fieldTouched = isFormik ? getIn(activeContext.touched, alias) : null;
+ const fallbackContext = useContext(FormikContext) as FormikContextType<any> | undefined;
+   const activeContext = formikContext || fallbackContext;
+   
+   // Hybrid State Engine: Use Formik if available, else fallback to standard controlled props
+   const isFormik = activeContext !== undefined && typeof activeContext.setFieldValue === 'function';
+   const fieldValue = isFormik ? getIn(activeContext!.values, alias) : value;
+   const fieldError = isFormik ? getIn(activeContext!.errors, alias) : null;
+   const fieldTouched = isFormik ? getIn(activeContext!.touched, alias) : null;
   
   const hasError = Boolean((fieldTouched && fieldError) || errorText);
   const displayError = errorText || fieldError;

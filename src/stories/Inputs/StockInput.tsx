@@ -1,9 +1,8 @@
 "use client";
 
-import React, { useRef, useState, useEffect, type JSX, useId } from "react";
-import { useFormikContext, getIn, type FormikContextType } from "formik";
+import React, { useRef, useState, useEffect, type JSX, useId, useContext } from "react";
+import { getIn, type FormikContextType, FormikContext } from "formik";
 import * as TooltipPrimitive from '@radix-ui/react-tooltip';
-import { Badge } from '@radix-ui/themes';
 import { IMaskInput } from 'react-imask';
 import { FaChartLine } from '@react-icons/all-files/fa/FaChartLine'; 
 import { Icon } from "../../components/icons/Icons";
@@ -125,8 +124,8 @@ export interface StockInputProps extends Omit<React.InputHTMLAttributes<HTMLInpu
 
 /**
  * @component StockInput
- * @description Equity tracking form field. Features an immutable ticker symbol badge prefix and structured asset valuation formatting constraints,
- * sharing exact visual parity with standard `Input` variants (Neumorphic, Skeuomorphic, Outline, Material).
+ * @description Equity tracking form field. Features an immutable, self-contained ticker symbol badge prefix and structured asset valuation formatting constraints,
+ * sharing exact visual parity with standard `Input` variants (Neumorphic, Skeuomorphic, Outline, Material) without external theme provider dependencies.
  */
 export const StockInput = React.forwardRef<HTMLInputElement, StockInputProps>(({
   alias,
@@ -166,14 +165,14 @@ export const StockInput = React.forwardRef<HTMLInputElement, StockInputProps>(({
   const internalId = useId();
   const inputId = `${alias}-input-${internalId}`;
 
-  const fallbackContext = useFormikContext<any>();
+  const fallbackContext = useContext(FormikContext) as FormikContextType<any> | undefined;
   const activeContext = formikContext || fallbackContext;
-  
+    
   // Hybrid State Engine: Use Formik if available, else fallback to standard controlled props
-  const isFormik = Boolean(activeContext);
-  const fieldValue = isFormik ? getIn(activeContext.values, alias) : value;
-  const fieldError = isFormik ? getIn(activeContext.errors, alias) : null;
-  const fieldTouched = isFormik ? getIn(activeContext.touched, alias) : null;
+  const isFormik = activeContext !== undefined && typeof activeContext.setFieldValue === 'function';
+  const fieldValue = isFormik ? getIn(activeContext!.values, alias) : value;
+  const fieldError = isFormik ? getIn(activeContext!.errors, alias) : null;
+  const fieldTouched = isFormik ? getIn(activeContext!.touched, alias) : null;
   
   const hasError = Boolean((fieldTouched && fieldError) || errorText);
   const displayError = errorText || fieldError;
@@ -270,7 +269,33 @@ export const StockInput = React.forwardRef<HTMLInputElement, StockInputProps>(({
             justify-content: center;
             position: absolute;
             z-index: 2;
-            left: 8px; /* Slightly tighter for the badge */
+            left: 8px;
+          }
+
+          /* Self-Contained Ticker / Chart Badge */
+          .mito-stock-badge {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            height: 24px;
+            padding: 0 10px;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            line-height: 1;
+            letter-spacing: 0.05em;
+            user-select: none;
+            box-sizing: border-box;
+            background-color: rgba(37, 99, 235, 0.1);
+            background-color: color-mix(in srgb, var(--scoped-active) 12%, transparent);
+            color: var(--scoped-active);
+            transition: background-color 0.2s ease, color 0.2s ease;
+          }
+
+          .mito-input-wrapper.mito-input-dark .mito-stock-badge {
+            background-color: rgba(255, 255, 255, 0.08);
+            color: var(--scoped-text);
+            border: 1px solid rgba(255, 255, 255, 0.12);
           }
 
           .mito-input-field {
@@ -443,21 +468,9 @@ export const StockInput = React.forwardRef<HTMLInputElement, StockInputProps>(({
         >
           
           <div className="mito-input-icon">
-            <Badge 
-              size="2" 
-              variant="soft" 
-              color={darkMode ? "gray" : "indigo"} 
-              style={{ 
-                height: '24px', 
-                padding: '0 10px', 
-                borderRadius: '4px', 
-                fontWeight: 600, 
-                userSelect: 'none',
-                letterSpacing: '0.05em'
-              }}
-            >
-              { tickerSymbol || <FaChartLine /> }
-            </Badge>
+            <span className="mito-stock-badge">
+              {tickerSymbol || <FaChartLine aria-hidden="true" />}
+            </span>
           </div>
           
           {inputLabel && floatingLabel && (
@@ -476,7 +489,6 @@ export const StockInput = React.forwardRef<HTMLInputElement, StockInputProps>(({
             {...({
               mask: Number,
               scale: 2,
-              signed: false,
               thousandsSeparator: ",",
               padFractionalZeros: true,
               normalizeZeros: true,
@@ -501,7 +513,7 @@ export const StockInput = React.forwardRef<HTMLInputElement, StockInputProps>(({
             aria-describedby={hasError ? `${alias}-error` : undefined}
             inputMode="decimal"
             className="mito-input-field has-badge"
-            style={{ textAlign: 'right' }} // Financial values align right
+            style={{ textAlign: 'right' }}
             {...props}
           />
         </div>

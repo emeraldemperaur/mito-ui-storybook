@@ -1,8 +1,7 @@
 "use client";
 
-import React, { useRef, useState, useEffect, type JSX, useId } from "react";
-import { useFormikContext, getIn, type FormikContextType } from "formik";
-import { Flex, Text, IconButton, Box, Badge } from '@radix-ui/themes';
+import React, { useRef, useState, useEffect, type JSX, useId, useContext } from "react";
+import { FormikContext, getIn, type FormikContextType } from "formik";
 import * as TooltipPrimitive from '@radix-ui/react-tooltip';
 import { ACCEPTED_FORMATS, ACCEPTED_EXTENSIONS, adjustColor, formatBytes, getNearestParentBackground } from "../../utils/Vinci";
 import { Icon } from "../../components/icons/Icons";
@@ -58,11 +57,11 @@ export interface FileInputProps extends Omit<React.InputHTMLAttributes<HTMLInput
    */
   helperText?: string;
   /** 
-   * @description Optional icon node rendered inside the input field header. 
+   * @description Optional icon node rendered inside the dropzone circular badge. 
    */
   icon?: React.ReactNode;
   /** 
-   * @description Determines if the optional generic icon is placed on the left (leading) or right (trailing).
+   * @description Determines if the circular icon badge is placed on the left (leading) or right (trailing).
    * @default "left"
    */
   iconPosition?: 'left' | 'right';
@@ -156,8 +155,8 @@ export interface FileInputProps extends Omit<React.InputHTMLAttributes<HTMLInput
 
 const getFileIcon = (file: File) => {
   if (file.type.startsWith('image/')) return <Icon name='image' width="20" height="20" style={{ color: 'var(--scoped-text)' }} />;
-  if (file.type.includes('pdf')) return <Icon name='filetext' width="20" height="20" style={{ color: '#ef4444' }} />; // Strict red for PDF
-  if (file.type.includes('csv') || file.type.includes('sheet')) return <Icon name='table' width="20" height="20" style={{ color: '#22c55e' }} />; // Strict green for excel/csv
+  if (file.type.includes('pdf')) return <Icon name='filetext' width="20" height="20" style={{ color: '#ef4444' }} />;
+  if (file.type.includes('csv') || file.type.includes('sheet')) return <Icon name='table' width="20" height="20" style={{ color: '#22c55e' }} />;
   if (file.name.endsWith('.zip')) return <Icon name='archive' width="20" height="20" style={{ color: 'var(--scoped-text)' }} />;
   return <Icon name='filetext' width="20" height="20" style={{ color: 'var(--scoped-text)' }} />;
 };
@@ -165,7 +164,7 @@ const getFileIcon = (file: File) => {
 /**
  * @component FileInput
  * @description Unified file uploader routing single/batch arrays. Supports Material, Outline, Neumorphic, and Skeuomorphic dropzone styling.
- * Shares exact visual parity with standard `Input` variants and relies entirely on Radix Tooltip primitives for isolated rendering.
+ * Shares exact visual parity with standard `Input` variants and relies entirely on deterministic layout primitives and Radix Tooltip primitives for isolated rendering.
  */
 export const FileInput = React.forwardRef<HTMLInputElement, FileInputProps>(({
   alias,
@@ -210,14 +209,14 @@ export const FileInput = React.forwardRef<HTMLInputElement, FileInputProps>(({
   const internalId = useId();
   const inputId = `${alias}-input-${internalId}`;
 
-  const fallbackContext = useFormikContext<any>();
+  const fallbackContext = useContext(FormikContext) as FormikContextType<any> | undefined;
   const activeContext = formikContext || fallbackContext;
-  
+    
   // Hybrid State Engine: Use Formik if available, else fallback to standard controlled props
-  const isFormik = Boolean(activeContext);
-  const fieldValue = isFormik ? getIn(activeContext.values, alias) : value;
-  const fieldError = isFormik ? getIn(activeContext.errors, alias) : null;
-  const fieldTouched = isFormik ? getIn(activeContext.touched, alias) : null;
+  const isFormik = activeContext !== undefined && typeof activeContext.setFieldValue === 'function';
+  const fieldValue = isFormik ? getIn(activeContext!.values, alias) : value;
+  const fieldError = isFormik ? getIn(activeContext!.errors, alias) : null;
+  const fieldTouched = isFormik ? getIn(activeContext!.touched, alias) : null;
   
   const hasError = Boolean((fieldTouched && fieldError) || errorText);
   const displayError = errorText || fieldError;
@@ -246,7 +245,7 @@ export const FileInput = React.forwardRef<HTMLInputElement, FileInputProps>(({
     if (!preview) return;
     const newUrls: Record<string, string> = {};
     currentFiles.forEach(file => {
-      if (file.type.startsWith('image/')) {
+      if (file.type && file.type.startsWith('image/')) {
         newUrls[file.name] = objectUrls[file.name] || URL.createObjectURL(file);
       }
     });
@@ -257,18 +256,20 @@ export const FileInput = React.forwardRef<HTMLInputElement, FileInputProps>(({
         if (!newUrls[name]) URL.revokeObjectURL(objectUrls[name]);
       });
     };
-  }, [currentFiles, preview]);
+  }, [fieldValue, preview]);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!e.target.files?.length) return;
     const incomingFiles = Array.from(e.target.files);
     const nextState = multiple ? [...currentFiles, ...incomingFiles] : incomingFiles[0];
     
-    if (isFormik) activeContext.setFieldValue(alias, nextState);
+    if (isFormik) {
+      activeContext.setFieldValue(alias, nextState);
+      setTimeout(() => activeContext.setFieldTouched(alias, true, false), 0);
+    }
     if (onChange) onChange(nextState);
-    setTimeout(() => isFormik && activeContext.setFieldTouched(alias, true, false), 0);
     
-    if (inputRef.current) inputRef.current.value = ''; // Reset input to allow uploading the same file again
+    if (inputRef.current) inputRef.current.value = '';
   };
 
   const handleRemove = (indexToRemove: number) => {
@@ -296,6 +297,22 @@ export const FileInput = React.forwardRef<HTMLInputElement, FileInputProps>(({
   } as React.CSSProperties & Record<string, any>;
 
   Object.keys(customStyles).forEach(key => customStyles[key] === undefined && delete customStyles[key]);
+
+  const iconCircleNode = (
+    <div 
+      className="mito-dropzone-icon-circle"
+      style={{ 
+        background: (design === 'neumorphic' || design === 'skeuomorphic') 
+          ? 'transparent' 
+          : (darkMode ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.05)'),
+        boxShadow: design === 'neumorphic' 
+          ? 'inset 2px 2px 5px var(--mito-input-shadow-dark), inset -2px -2px 5px var(--mito-input-shadow-light)' 
+          : 'none' 
+      }}
+    >
+      {icon ? icon : <Icon name='upload' width="20" height="20" style={{ color: 'var(--scoped-active)' }} />}
+    </div>
+  );
 
   return (
     <Column span={width} newLine={newRow}>
@@ -351,7 +368,7 @@ export const FileInput = React.forwardRef<HTMLInputElement, FileInputProps>(({
           /* Dropzone Core Styling */
           .mito-input-dropzone {
             width: 100%;
-            box-sizing: border-box; /* Crucial for containment */
+            box-sizing: border-box;
             height: auto;
             min-height: 60px;
             cursor: pointer;
@@ -365,6 +382,53 @@ export const FileInput = React.forwardRef<HTMLInputElement, FileInputProps>(({
           .mito-input-dropzone:disabled, .mito-input-dropzone[data-readonly="true"] {
             cursor: default;
             opacity: 0.7;
+          }
+
+          .mito-dropzone-header {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            width: 100%;
+            min-height: 44px;
+          }
+
+          .mito-dropzone-icon-circle {
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            flex-shrink: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s ease;
+          }
+
+          .mito-dropzone-text-col {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            gap: 2px;
+            flex: 1;
+            min-width: 0;
+          }
+
+          .mito-dropzone-title {
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: var(--scoped-text);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            line-height: 1.3;
+          }
+
+          .mito-dropzone-subtitle {
+            font-size: 0.75rem;
+            color: var(--scoped-placeholder);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            line-height: 1.3;
           }
 
           /* --- Outline Dropzone Variant --- */
@@ -418,10 +482,18 @@ export const FileInput = React.forwardRef<HTMLInputElement, FileInputProps>(({
           .mito-dropzone-skeuomorphic:hover:not([data-readonly="true"]) { box-shadow: inset 0 2px 8px rgba(0,0,0,0.2), 0 0 0 2px rgba(37, 99, 235, 0.4); }
           .mito-dropzone-skeuomorphic[data-error="true"] { border-color: var(--scoped-error); box-shadow: inset 0 2px 8px rgba(0,0,0,0.2), 0 0 0 1px var(--scoped-error); }
           
-          /* Attached File Item Card Styling */
+          /* Attached File Item List & Card Styling */
+          .mito-file-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            width: 100%;
+            margin-top: 4px;
+          }
+
           .mito-file-card {
             width: 100%;
-            box-sizing: border-box; /* Crucial for containment */
+            box-sizing: border-box;
             padding: 8px 12px;
             border-radius: 6px;
             display: flex;
@@ -445,11 +517,56 @@ export const FileInput = React.forwardRef<HTMLInputElement, FileInputProps>(({
             box-shadow: 0 2px 6px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.1);
           }
 
+          .mito-file-meta {
+            display: flex;
+            flex-direction: column;
+            flex-grow: 1;
+            min-width: 0;
+            gap: 2px;
+          }
+
+          .mito-file-submeta {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+          }
+
+          .mito-file-badge {
+            font-size: 0.6875rem;
+            font-weight: 600;
+            padding: 1px 6px;
+            border-radius: 4px;
+            background-color: rgba(37, 99, 235, 0.1);
+            color: var(--scoped-active);
+            letter-spacing: 0.02em;
+          }
+          .mito-input-wrapper.mito-input-dark .mito-file-badge {
+            background-color: rgba(255, 255, 255, 0.1);
+            color: var(--scoped-text);
+          }
+
+          .mito-file-remove-btn {
+            all: unset;
+            width: 26px;
+            height: 26px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--scoped-error);
+            cursor: pointer;
+            flex-shrink: 0;
+            transition: background-color 0.2s ease;
+          }
+          .mito-file-remove-btn:hover {
+            background-color: rgba(239, 68, 68, 0.1);
+          }
+
           /* Floating Label Logic (Fallback for Dropzone layout) */
           .mito-input-floating-label {
             position: absolute;
             left: 14px;
-            top: 24px; /* Centered in standard dropzone header */
+            top: 24px;
             transform: translateY(-50%);
             font-size: 0.95rem;
             color: var(--scoped-placeholder);
@@ -461,15 +578,15 @@ export const FileInput = React.forwardRef<HTMLInputElement, FileInputProps>(({
             margin-left: -4px;
           }
           .mito-input-floating-label.floating {
-            top: -2px; /* Pull up to the top edge */
+            top: -2px;
             left: 10px;
             font-size: 0.75rem;
             color: var(--scoped-active);
             font-weight: 500;
             background-color: var(--scoped-bg);
           }
-          .mito-dropzone-neumorphic .mito-input-floating-label.floating { background-color: var(--mito-input-bg-env); }
-          .mito-dropzone-skeuomorphic .mito-input-floating-label.floating { background-color: var(--mito-input-bg-env); }
+          .mito-dropzone-neumorphic ~ .mito-input-floating-label.floating { background-color: var(--mito-input-bg-env); }
+          .mito-dropzone-skeuomorphic ~ .mito-input-floating-label.floating { background-color: var(--mito-input-bg-env); }
           .mito-input-dropzone[data-error="true"] ~ .mito-input-floating-label.floating { color: var(--scoped-error); }
 
           /* Validation Text */
@@ -528,31 +645,20 @@ export const FileInput = React.forwardRef<HTMLInputElement, FileInputProps>(({
             data-has-files={hasValue}
             onClick={() => !(readOnly || props.disabled) && inputRef.current?.click()}
           >
-            <Flex align="center" gap="4" style={{ width: '100%', minHeight: '36px' }}>
-              <Box 
-                style={{ 
-                  background: (design === 'neumorphic' || design === 'skeuomorphic') ? 'transparent' : (darkMode ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)'), 
-                  borderRadius: '50%', 
-                  padding: '12px', 
-                  flexShrink: 0, 
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  boxShadow: design === 'neumorphic' ? 'inset 2px 2px 5px var(--mito-input-shadow-dark), inset -2px -2px 5px var(--mito-input-shadow-light)' : 'none' 
-                }}
-              >
-                {icon ? icon : <Icon name='upload' width="20" height="20" style={{ color: 'var(--scoped-active)' }} />}
-              </Box>
-              &nbsp;&nbsp;
-              <Flex direction="column" style={{ flex: 1, minWidth: 0 }}>
-                <Text weight="bold" style={{ color: 'var(--scoped-text)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+            <div className="mito-dropzone-header">
+              {iconPosition === 'left' && iconCircleNode}
+
+              <div className="mito-dropzone-text-col">
+                <span className="mito-dropzone-title">
                   {hasValue ? `${currentFiles.length} file${currentFiles.length !== 1 ? 's' : ''} attached` : (multiple ? "Choose files..." : "Choose file...")}
-                </Text>
-                <Text size="1" style={{ color: 'var(--scoped-placeholder)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                </span>
+                <span className="mito-dropzone-subtitle">
                   {helperText}
-                </Text>
-              </Flex>
-            </Flex>
+                </span>
+              </div>
+
+              {iconPosition === 'right' && iconCircleNode}
+            </div>
 
             <input
               ref={(node) => {
@@ -581,7 +687,7 @@ export const FileInput = React.forwardRef<HTMLInputElement, FileInputProps>(({
             />
 
             {hasValue && (
-              <Flex direction="column" gap="3" style={{ width: '100%', marginTop: '8px' }}>
+              <div className="mito-file-list">
                 {currentFiles.map((file, idx) => (
                   <div 
                     key={`${file.name}-${idx}`} 
@@ -593,27 +699,32 @@ export const FileInput = React.forwardRef<HTMLInputElement, FileInputProps>(({
                         <img src={objectUrls[file.name]} alt="preview" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                       </div>
                     ) : (
-                      <Box style={{ width: '40px', height: '40px', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '6px', flexShrink: 0, background: darkMode ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)' }}>
+                      <div style={{ width: '40px', height: '40px', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '6px', flexShrink: 0, background: darkMode ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)' }}>
                         {getFileIcon(file)}
-                      </Box>
+                      </div>
                     )}
 
-                    <Flex direction="column" style={{ flexGrow: 1, minWidth: 0 }}>
-                      <Text size="2" weight="bold" style={{ color: 'var(--scoped-text)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{file.name}</Text>
-                      <Flex gap="3" align="center">
-                        <Text size="1" style={{ color: 'var(--scoped-placeholder)' }}>{formatBytes(file.size)}</Text>&nbsp;
-                        <Badge size="1" color={darkMode ? "gray" : "indigo"} variant="soft">&nbsp;{file.name.split('.').pop()?.toUpperCase()}&nbsp;</Badge>
-                      </Flex>
-                    </Flex>
+                    <div className="mito-file-meta">
+                      <span className="mito-dropzone-title" style={{ fontSize: '0.85rem' }}>{file.name}</span>
+                      <div className="mito-file-submeta">
+                        <span className="mito-dropzone-subtitle">{formatBytes(file.size)}</span>
+                        <span className="mito-file-badge">{file.name.split('.').pop()?.toUpperCase()}</span>
+                      </div>
+                    </div>
 
                     {!(readOnly || props.disabled) && (
-                      <IconButton size="1" variant="ghost" color="red" type="button" onClick={() => handleRemove(idx)} style={{ borderRadius: '50%', cursor: 'pointer' }}>
+                      <button
+                        type="button"
+                        className="mito-file-remove-btn"
+                        aria-label={`Remove ${file.name}`}
+                        onClick={() => handleRemove(idx)}
+                      >
                         <Icon name='close' width="16" height="16" />
-                      </IconButton>
+                      </button>
                     )}
                   </div>
                 ))}
-              </Flex>
+              </div>
             )}
           </div>
           

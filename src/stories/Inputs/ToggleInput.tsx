@@ -1,254 +1,495 @@
 "use client";
 
-import React, { useRef, useState, useEffect, type JSX } from "react";
+import React, { useRef, useState, useEffect, type JSX, useId, useContext } from "react";
 import * as TogglePrimitive from '@radix-ui/react-toggle';
-import { useFormikContext, getIn } from 'formik';
-import { Button, Tooltip } from '@radix-ui/themes'; 
+import { FormikContext, getIn, type FormikContextType } from 'formik';
+import { Slot } from '@radix-ui/react-slot';
+import * as TooltipPrimitive from '@radix-ui/react-tooltip'; 
 import { adjustColor, getNearestParentBackground } from "../../utils/Vinci";
 import { Column } from "../Layout/Column";
 import { Icon } from "../../components/icons/Icons";
-import { type BaseInputProps, sharedInputStyles } from "../../utils/types";
-import '../../styles/main.scss';
+import { sharedInputStyles } from "./types";
+import { type InputDesign } from "./Input";
 
-export interface ToggleProps extends BaseInputProps {
-  /** Option to specify an Icon name for Toggle input field. @default "layers" */
+/**
+ * @interface ToggleProps
+ * @description Strongly-typed attributes mapping Formik or standalone boolean state to a tactile multi-variant toggle switch.
+ */
+export interface ToggleProps extends Omit<React.ButtonHTMLAttributes<HTMLButtonElement>, 'onChange' | 'value' | 'defaultValue'> {
+  /** 
+   * @description Unique identifier mapping the input to its Formik state and DOM label. 
+   * @required
+   */
+  alias: string;
+  /** 
+   * @description Option to specify an Icon name for Toggle input field. 
+   * @default "layers" 
+   */
   icon?: React.ComponentProps<typeof Icon>['name'];
+  /** 
+   * @description Determines if the icon is placed on the left (leading) or right (trailing) of the label.
+   * @default "left"
+   */
+  iconPosition?: 'left' | 'right';
+  /** 
+   * @description Text rendered adjacent to the toggle switch.
+   */
+  inputLabel?: string;
+  /**
+   * @description The core architectural design variant of the toggle switch.
+   * - `material`: Minimalist track with vibrant inset thumb.
+   * - `outline`: Crisp bordered track.
+   * - `neumorphic`: Soft, extruded physical surface utilizing inset shadows.
+   * - `skeuomorphic`: High-fidelity 3D realistic mechanical sliding switch.
+   * @default 'outline'
+   */
+  design?: InputDesign;
+  /** 
+   * @description Toggles the interactive floating label animation (primarily used with outline/material variants).
+   * @default false
+   */
+  floatingLabel?: boolean;
+  /** 
+   * @description Forces the component into dark mode, overriding system or parent theme contexts. 
+   */
+  darkMode?: boolean;
+  /** 
+   * @description Legacy color override object. Prefer `activeColor` for standard implementations.
+   */
+  darkModeColors?: { light: string; dark: string };
+  /** 
+   * @description Dynamic base background color for light mode. Injected as `--mito-input-bg`.
+   */
+  backgroundColor?: string;
+  /** 
+   * @description Dynamic base background color specifically for dark mode contexts.
+   */
+  darkBackgroundColor?: string;
+  /** 
+   * @description Standard text and icon color for light mode. Injected as `--mito-input-text`.
+   */
+  textColor?: string;
+  /** 
+   * @description Standard text and icon color specifically for dark mode contexts.
+   */
+  darkTextColor?: string;
+  /** 
+   * @description Validation failure text color for light mode. Injected as `--mito-input-error`.
+   */
+  errorTextColor?: string;
+  /** 
+   * @description Validation failure text color for dark mode. Injected as `--mito-input-error-dark`.
+   */
+  darkErrorTextColor?: string;
+  /** 
+   * @description Highlight color applied to the active 'on' state of the toggle track. 
+   */
+  activeColor?: string;
+  /** 
+   * @description Font family override to match specific UI brand primitives. 
+   */
+  fontFamily?: string;
+  /** 
+   * @description Toggles an active hint tooltip next to the label. 
+   */
+  isHinted?: boolean;
+  /** 
+   * @description The informational text displayed inside the hint tooltip. 
+   */
+  hintText?: string;
+  /** 
+   * @description Optional URL to open when the hint tooltip icon is clicked. 
+   */
+  hintUrl?: string;
+  /** 
+   * @description Explicit error message string. Overrides Formik validation errors if provided. 
+   */
+  errorText?: string;
+  /** 
+   * @description Viewport column width configuration value (1 to 12). 
+   * @default 12 
+   */
+  width?: number;
+  /** 
+   * @description Forces container layouts to break downward onto a fresh structural row line. 
+   */
+  newRow?: boolean;
+  /** 
+   * @description Locks the component to prevent user interaction, rendering a disabled visual state.
+   */
+  readOnly?: boolean;
+  /** 
+   * @description Opacity multiplier for the Neumorphic shadow intensity to ensure WCAG contrast. 
+   * @default 1 
+   */
+  neuIntensity?: number;
+  /** 
+   * @description Specific custom style class selector appended to the root container. 
+   */
+  className?: string;
+  /** 
+   * @description Inline modification style rules object. 
+   */
+  style?: React.CSSProperties;
+  /** 
+   * @description Explicit Formik context object injected for nested step fields. 
+   */
+  formikContext?: FormikContextType<any>;
+  /** 
+   * @description External fallback state boolean value for standalone non-Formik setups.
+   */
+  value?: boolean;
+  /** 
+   * @description Delegates rendering to the immediate child element via Radix Slot. 
+   */
+  asChild?: boolean;
+  /** 
+   * @description Unmasked raw boolean value callback for external state management. 
+   */
+  onChange?: (value: boolean) => void;
 }
 
 /**
  * @component ToggleInput
- * @description Multi-variant tactile toggle. Supports Material, Outline, and the Vanguard Neumorphic design.
+ * @description Unified SSR-safe toggle switch. Replaces traditional push-buttons with sliding mechanical switches across Material, Outline, Neumorphic, and Skeuomorphic variants.
  */
 export const ToggleInput = React.forwardRef<HTMLButtonElement, ToggleProps>(({
   alias, 
   readOnly, 
   width = 12, 
   inputLabel,
+  floatingLabel = false,
   design = 'outline',
-  elevation = 3,
-  surface = 'flat',         
-  lightSource = 'top-left', 
+  icon,
+  iconPosition = 'left',
+  darkMode = false,
   darkModeColors,
+  backgroundColor,
+  darkBackgroundColor,
+  textColor,
+  darkTextColor,
+  errorTextColor,
+  darkErrorTextColor,
+  activeColor,
+  fontFamily,
   style,
   newRow,
   isHinted,
   hintText,
   hintUrl, 
   errorText,
-  icon = 'layers',
+  neuIntensity = 1,
   className = "",
   formikContext,
   value,
+  asChild,
   onChange,
-  // Plucked to prevent TS DOM collisions
-  defaultValue,
   ...props
 }, ref): JSX.Element => {
   
-  const fallbackContext = useFormikContext<any>();
+  const fallbackContext = useContext(FormikContext) as FormikContextType<any> | undefined;
   const activeContext = formikContext || fallbackContext;
+  const internalId = useId();
 
-  const isFormik = Boolean(activeContext);
-  const fieldValue = isFormik ? getIn(activeContext.values, alias) : value;
-  const fieldTouched = isFormik ? getIn(activeContext.touched, alias) : null;
-  const fieldError = isFormik ? getIn(activeContext.errors, alias) : null;
+  // Hybrid State Engine: Use Formik if available, else fallback to standard controlled props
+  const isFormik = activeContext !== undefined && typeof activeContext.setFieldValue === 'function';
+  const fieldValue = isFormik ? getIn(activeContext!.values, alias) : value;
+  const fieldError = isFormik ? getIn(activeContext!.errors, alias) : null;
+  const fieldTouched = isFormik ? getIn(activeContext!.touched, alias) : null;
   
   const hasError = Boolean((fieldTouched && fieldError) || errorText);
   const displayError = errorText || fieldError;
+  const isActive = Boolean(fieldValue);
 
   const containerRef = useRef<HTMLDivElement>(null);
-  const [neuVars, setNeuVars] = useState<React.CSSProperties>({});
+  const [neuVars, setNeuVars] = useState<React.CSSProperties & Record<string, any>>({});
+  const themeClass = darkMode ? 'mito-input-dark' : '';
+  const resolvedBrandColor = activeColor || darkModeColors?.light || '#2563eb';
 
   useEffect(() => {
-    if (design === 'neumorphic' && containerRef.current) {
-      const parentBg = getNearestParentBackground(containerRef.current.parentElement);
+    if ((design === 'neumorphic' || design === 'skeuomorphic') && containerRef.current) {
+      const parentBg = backgroundColor || getNearestParentBackground(containerRef.current.parentElement) || '#e0e5ec';
+      const shadowDark = adjustColor(parentBg, -20 * neuIntensity);
+      const shadowLight = adjustColor(parentBg, 20 * neuIntensity);
+      
       setNeuVars({
-        '--neu-bg': parentBg,
-        '--neu-shadow-dark': adjustColor(parentBg, -20), 
-        '--neu-shadow-light': adjustColor(parentBg, 20),
-        '--vg-accent': 'var(--ui-brand-color, var(--blue-9))',
+        '--mito-input-bg-env': parentBg,
+        '--mito-input-shadow-dark': shadowDark, 
+        '--mito-input-shadow-light': shadowLight,
       } as React.CSSProperties);
     }
-  }, [design, elevation]);
+  }, [design, backgroundColor, neuIntensity]);
 
   const handleToggle = (val: boolean) => {
     if (!readOnly) {
-      if (isFormik) activeContext.setFieldValue(alias, val);
+      if (isFormik) {
+        activeContext.setFieldValue(alias, val);
+        setTimeout(() => activeContext.setFieldTouched(alias, true, false), 0);
+      }
       if (onChange) onChange(val);
-      setTimeout(() => isFormik && activeContext.setFieldTouched(alias, true, false), 0);
     }
   };
 
-  const materialStyle: React.CSSProperties = {
-    textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 600,
-    borderRadius: '4px', transition: 'all 0.2s ease',
-  };
+  const customStyles = {
+    ...style,
+    ...neuVars,
+    '--mito-input-bg': backgroundColor,
+    '--mito-input-bg-dark': darkBackgroundColor || backgroundColor,
+    '--mito-input-text': textColor,
+    '--mito-input-text-dark': darkTextColor || textColor,
+    '--mito-input-error': errorTextColor || '#ef4444',
+    '--mito-input-error-dark': darkErrorTextColor || errorTextColor || '#f87171',
+    '--mito-input-active': resolvedBrandColor,
+    '--mito-input-font': fontFamily,
+  } as React.CSSProperties & Record<string, any>;
 
-  const outlineStyle: React.CSSProperties = {
-    fontWeight: 600, background: 'transparent', transition: 'all 0.1s ease',
-  };
+  Object.keys(customStyles).forEach(key => customStyles[key] === undefined && delete customStyles[key]);
 
-  const iconColor = fieldValue && !readOnly ? 'var(--ui-brand-color, var(--blue-9))' : 'var(--gray-8)';
+  const inputId = `${alias}-trigger-${internalId}`;
+  const Component = asChild ? Slot : "button";
 
   return (
     <Column span={width} newLine={newRow}>
       <div 
         ref={containerRef} 
-        className={`v-input-wrapper ${className}`}
-        style={{ ...style, ...neuVars, ...(darkModeColors?.light ? { '--ui-brand-color': darkModeColors.light } : {}) } as React.CSSProperties}
+        className={`mito-input-wrapper ${themeClass} ${className}`}
+        style={customStyles}
       >
-        <style dangerouslySetInnerHTML={{ __html: sharedInputStyles }} />
+        <style dangerouslySetInnerHTML={{ __html: sharedInputStyles || '' }} />
         
-        {design === 'neumorphic' ? (
-            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '8px' }}>
-                <style dangerouslySetInnerHTML={{__html: `
-                  .vg-toggle-wrapper-${alias} {
-                    display: flex; justify-content: center; align-items: center;
-                    position: relative; border-radius: .5em; padding: .125em;
-                    background-image: linear-gradient(to bottom, #d5d5d5, #e8e8e8);
-                    box-shadow: 0 1px 1px rgba(255, 255, 255, 0.6);
-                    font-size: 20px; /* Anchor scaling */
-                    flex-shrink: 0;
-                  }
+        <style dangerouslySetInnerHTML={{ __html: `
+          .mito-input-wrapper {
+            --scoped-bg: var(--mito-input-bg, #ffffff);
+            --scoped-text: var(--mito-input-text, #111827);
+            --scoped-placeholder: #9ca3af;
+            --scoped-border: #d1d5db;
+            --scoped-active: var(--mito-input-active, #2563eb);
+            --scoped-error: var(--mito-input-error, #ef4444);
+            --scoped-font: var(--mito-input-font, system-ui, -apple-system, sans-serif);
+            
+            display: flex;
+            flex-direction: column;
+            width: 100%;
+            font-family: var(--scoped-font);
+            position: relative;
+            opacity: ${readOnly ? 0.7 : 1};
+          }
+          
+          .mito-input-wrapper.mito-input-dark {
+            --scoped-bg: var(--mito-input-bg-dark, #1f2937);
+            --scoped-text: var(--mito-input-text-dark, #f9fafb);
+            --scoped-placeholder: #6b7280;
+            --scoped-border: #4b5563;
+            --scoped-error: var(--mito-input-error-dark, #f87171);
+          }
 
-                  /* Radix Item Override */
-                  .vg-toggle-checkbox-${alias} {
-                    all: unset; appearance: none; position: absolute; z-index: 2;
-                    border-radius: inherit; width: 100%; height: 100%;
-                    opacity: 0.0001; /* Invisible but intercepts clicks */
-                    cursor: pointer;
-                  }
-                  
-                  .vg-toggle-checkbox-${alias}:focus-visible + .vg-toggle-container-${alias} {
-                    outline: 2px solid var(--vg-accent); outline-offset: 2px;
-                  }
+          .mito-toggle-layout {
+            display: flex;
+            justify-content: flex-start;
+            align-items: center;
+            gap: 16px;
+            width: fit-content;
+          }
 
-                  .vg-toggle-container-${alias} {
-                    display: flex; align-items: center; position: relative;
-                    border-radius: .375em; width: 3em; height: 1.5em;
-                    background-color: #e8e8e8;
-                    box-shadow: inset 0 0 .0625em .125em rgba(255, 255, 255, 0.2), 
-                                inset 0 .0625em .125em rgba(0, 0, 0, 0.4);
-                    transition: background-color .4s linear; z-index: 1;
-                  }
+          .mito-input-label-static {
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: var(--scoped-text);
+            display: flex;
+            align-items: center;
+            gap: 0.35rem;
+            cursor: ${readOnly ? 'default' : 'pointer'};
+          }
 
-                  /* Track State Hook mapped to Radix ARIA */
-                  .vg-toggle-checkbox-${alias}[data-state='on'] + .vg-toggle-container-${alias} {
-                    background-color: var(--vg-accent, #f3b519);
-                  }
+          /* --- Standard Switch Base --- */
+          .mito-switch-base {
+            all: unset;
+            position: relative;
+            cursor: pointer;
+            flex-shrink: 0;
+            transition: all 0.3s ease;
+            box-sizing: border-box;
+          }
+          .mito-switch-base:disabled { cursor: default; }
+          .mito-switch-base:focus-visible { outline: 2px solid var(--scoped-active); outline-offset: 2px; }
+          
+          /* The Thumb */
+          .mito-switch-base::before {
+            content: '';
+            position: absolute;
+            transition: transform 0.3s cubic-bezier(0.4, 0.0, 0.2, 1), background-color 0.3s ease;
+          }
 
-                  .vg-toggle-button-${alias} {
-                    display: flex; justify-content: center; align-items: center; position: absolute;
-                    left: .0625em; border-radius: .3125em; width: 1.375em; height: 1.375em;
-                    background-color: #e8e8e8;
-                    box-shadow: inset 0 -.0625em .0625em .125em rgba(0, 0, 0, 0.1), 
-                                inset 0 -.125em .0625em rgba(0, 0, 0, 0.2), 
-                                inset 0 .1875em .0625em rgba(255, 255, 255, 0.3), 
-                                0 .125em .125em rgba(0, 0, 0, 0.5);
-                    transition: left .4s cubic-bezier(0.4, 0, 0.2, 1);
-                  }
+          /* --- Outline Design --- */
+          .mito-switch-outline {
+            width: 44px; height: 24px; border-radius: 12px; 
+            background-color: var(--scoped-border);
+          }
+          .mito-switch-outline[data-state="on"] { background-color: var(--scoped-active); }
+          .mito-switch-outline[data-error="true"] { background-color: var(--scoped-error); }
+          
+          .mito-switch-outline::before {
+            width: 18px; height: 18px; border-radius: 50%; 
+            top: 3px; left: 3px;
+            background-color: var(--scoped-bg); 
+            box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+          }
+          .mito-switch-outline[data-state="on"]::before { transform: translateX(20px); }
 
-                  /* Thumb Slide Animation Hook mapped to Radix ARIA */
-                  .vg-toggle-checkbox-${alias}[data-state='on'] + .vg-toggle-container-${alias} > .vg-toggle-button-${alias} {
-                    left: 1.5625em;
-                  }
+          /* --- Material Design --- */
+          .mito-switch-material {
+            width: 40px; height: 20px; border-radius: 10px; 
+            background-color: var(--scoped-border);
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.1);
+          }
+          .mito-switch-material[data-state="on"] { background-color: var(--scoped-active); }
+          .mito-switch-material[data-error="true"] { background-color: var(--scoped-error); }
+          
+          .mito-switch-material::before {
+            width: 24px; height: 24px; border-radius: 50%; 
+            top: -2px; left: -2px;
+            background-color: var(--scoped-bg); 
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+          }
+          .mito-switch-material[data-state="on"]::before { transform: translateX(20px); }
 
-                  .vg-toggle-circles-${alias} {
-                    display: grid; grid-template-columns: repeat(3, min-content); gap: .125em;
-                    position: absolute; margin: 0 auto;
-                  }
+          /* --- Neumorphic Design --- */
+          .mito-switch-neumorphic {
+            width: 50px; height: 28px; border-radius: 14px; 
+            background-color: var(--mito-input-bg-env);
+            box-shadow: inset 2px 2px 5px var(--mito-input-shadow-dark), inset -2px -2px 5px var(--mito-input-shadow-light);
+          }
+          .mito-switch-neumorphic[data-state="on"] { background-color: var(--scoped-active); }
+          .mito-switch-neumorphic[data-error="true"] { background-color: var(--scoped-error); }
+          
+          .mito-switch-neumorphic::before {
+            width: 22px; height: 22px; border-radius: 50%; 
+            top: 3px; left: 3px;
+            background-color: var(--mito-input-bg-env); 
+            box-shadow: 2px 2px 4px rgba(0,0,0,0.2), -1px -1px 3px rgba(255,255,255,0.7);
+          }
+          .mito-switch-neumorphic[data-state="on"]::before { transform: translateX(22px); }
 
-                  .vg-circle-${alias} {
-                    border-radius: 50%; width: .125em; height: .125em;
-                    background-image: radial-gradient(circle at 50% 0, #f5f5f5, #c4c4c4);
-                  }
-                `}} />
+          /* --- Skeuomorphic Design --- */
+          .mito-switch-skeuomorphic {
+            width: 44px; height: 24px; border-radius: 12px;
+            background-image: linear-gradient(to bottom, rgba(0,0,0,0.1) 0%, rgba(255,255,255,0.1) 100%);
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.2), 0 1px 0 rgba(255,255,255,0.8);
+            border: 1px solid rgba(0,0,0,0.3);
+          }
+          .mito-switch-skeuomorphic[data-state="on"] { background-color: var(--scoped-active); }
+          .mito-switch-skeuomorphic[data-error="true"] { background-color: var(--scoped-error); }
+          
+          .mito-switch-skeuomorphic::before {
+            width: 18px; height: 18px; border-radius: 50%; 
+            top: 2px; left: 2px;
+            background-color: var(--mito-input-bg-env); 
+            background-image: linear-gradient(to bottom, rgba(255,255,255,0.8) 0%, rgba(0,0,0,0.1) 100%);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,1);
+          }
+          .mito-switch-skeuomorphic[data-state="on"]::before { transform: translateX(20px); }
 
-                <div 
-                  className={`vg-toggle-wrapper-${alias}`} 
-                  style={{ opacity: readOnly ? 0.6 : 1, pointerEvents: readOnly ? 'none' : 'auto' }}
-                >
-                    <TogglePrimitive.Root
-                      ref={ref as any}
-                      id={`${alias}-trigger`}
-                      name={alias}
-                      pressed={Boolean(fieldValue)}
-                      onPressedChange={handleToggle}
-                      disabled={readOnly}
-                      aria-describedby={`${alias}-label`}
-                      className={`vg-toggle-checkbox-${alias}`}
-                      {...(props as any)}
-                    />
-                    <div className={`vg-toggle-container-${alias}`}>
-                      <div className={`vg-toggle-button-${alias}`}>
-                        <div className={`vg-toggle-circles-${alias}`}>
-                          {[...Array(12)].map((_, i) => (
-                             <div key={i} className={`vg-circle-${alias}`}></div>
-                          ))}
-                        </div>
-                      </div>
-                    </div>
-                </div>
-
-                <Icon 
-                    name={icon} height="20" width="20" color={iconColor}
-                    style={{ transition: 'color 0.3s ease', opacity: readOnly ? 0.5 : 1, cursor: readOnly ? 'default' : 'pointer' }}
-                    onClick={() => handleToggle(!fieldValue)}
-                />
-            </div>
-        ) : (
-            <TogglePrimitive.Root
-                pressed={Boolean(fieldValue)}
-                onPressedChange={handleToggle}
-                name={alias}
-                disabled={readOnly}
-                id={`${alias}-trigger`}
-                aria-describedby={`${alias}-label`}
-                asChild
-            >
-                <Button
-                    ref={ref as any}
-                    disabled={readOnly}
-                    className={`design-toggle ${design}`}
-                    style={{
-                        ...(design === 'material' ? materialStyle : {}),
-                        ...(design === 'outline' ? outlineStyle : {}),
-                        marginBottom: '8px'
-                    }}
-                    type="button"
-                    {...(props as any)}
-                >
-                    <style dangerouslySetInnerHTML={{__html: `
-                        .design-toggle.material[data-state='on'] { background-color: var(--ui-brand-color, var(--blue-9)); color: white; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
-                        .design-toggle.material[data-state='off'] { background-color: var(--gray-3); color: var(--gray-11); }
-                        .design-toggle.outline[data-state='on'] { border: 2px solid var(--ui-brand-color, var(--blue-9)); color: var(--ui-brand-color, var(--blue-9)); background-color: var(--accent-2); }
-                        .design-toggle.outline[data-state='off'] { border: 1px solid var(--gray-7); color: var(--gray-11); }
-                    `}} />
-                    {props.children || <Icon name={icon} />}
-                </Button>
-            </TogglePrimitive.Root>
-        )}
-
-        <div>
-          {inputLabel && (
-            <label className="v-input-label" id={`${alias}-label`} htmlFor={`${alias}-trigger`}>
+          /* Validation Text */
+          .mito-input-error-text {
+            font-size: 0.75rem;
+            color: var(--scoped-error);
+            margin-top: 6px;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            animation: mito-fade-in 0.3s ease;
+          }
+          @keyframes mito-fade-in { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: translateY(0); } }
+        `}} />
+        
+        <div className="mito-toggle-layout">
+          {inputLabel ? (
+            <label className="mito-input-label-static" id={`${alias}-label`} htmlFor={inputId}>
+              {/* Icon placed left of label */}
+              {icon && iconPosition === 'left' && (
+                <Icon name={icon} height="16" width="16" style={{ color: 'var(--scoped-placeholder)' }} />
+              )}
+              
               {inputLabel}
+              
+              {/* Icon placed right of label */}
+              {icon && iconPosition === 'right' && (
+                <Icon name={icon} height="16" width="16" style={{ color: 'var(--scoped-placeholder)' }} />
+              )}
+
               {isHinted && (
-                <Tooltip content={hintText || "Information"} align="start">
-                  <a href={hintUrl || "#"} target="_blank" rel="noopener noreferrer" style={{ marginLeft: 6 }}>
-                    <Icon name="questionmarkcircled" height="14" width="14" style={{ color: 'var(--gray-9)' }} />
-                  </a> 
-                </Tooltip>
+                <TooltipPrimitive.Provider delayDuration={300}>
+                  <TooltipPrimitive.Root>
+                    <TooltipPrimitive.Trigger asChild>
+                      <a href={hintUrl || "#"} target="_blank" rel="noopener noreferrer" style={{ display: 'flex', alignItems: 'center', pointerEvents: 'auto', marginLeft: '4px' }}>
+                        <Icon name="questionmarkcircled" height="14" width="14" style={{ color: 'var(--scoped-placeholder)' }} />
+                      </a> 
+                    </TooltipPrimitive.Trigger>
+                    <TooltipPrimitive.Portal>
+                      <TooltipPrimitive.Content 
+                        sideOffset={5} 
+                        style={{ 
+                          backgroundColor: darkMode ? '#374151' : '#111827', 
+                          color: '#f9fafb', 
+                          padding: '6px 10px', 
+                          borderRadius: '4px', 
+                          fontSize: '0.75rem',
+                          fontFamily: 'inherit',
+                          zIndex: 50
+                        }}
+                      >
+                        {hintText || "Information"}
+                        <TooltipPrimitive.Arrow style={{ fill: darkMode ? '#374151' : '#111827' }} />
+                      </TooltipPrimitive.Content>
+                    </TooltipPrimitive.Portal>
+                  </TooltipPrimitive.Root>
+                </TooltipPrimitive.Provider>
               )}
             </label>
+          ) : (
+            /* If no label exists, render icon independently */
+            icon ? (
+              <Icon 
+                name={icon} 
+                height="20" 
+                width="20" 
+                style={{ 
+                  color: isActive && !readOnly ? 'var(--scoped-active)' : 'var(--scoped-placeholder)',
+                  transition: 'color 0.3s ease'
+                }} 
+              />
+            ) : <div />
           )}
 
-          {hasError && displayError && (
-            <span id={`${alias}-error`} className="v-input-error" role="alert" style={{ display: 'block', marginTop: 4 }}>
-              {typeof displayError === 'string' ? displayError : "Required field"}
-            </span>
-          )}
+          <TogglePrimitive.Root
+            pressed={isActive}
+            onPressedChange={handleToggle}
+            name={alias}
+            disabled={readOnly}
+            asChild={!asChild}
+          >
+            <Component
+              ref={ref as any}
+              id={inputId}
+              type="button"
+              disabled={readOnly}
+              data-state={isActive ? "on" : "off"}
+              data-error={hasError}
+              aria-invalid={hasError}
+              aria-describedby={inputLabel ? `${alias}-label` : undefined}
+              className={`mito-switch-base mito-switch-${design} ${className}`}
+              {...(props as any)}
+            />
+          </TogglePrimitive.Root>
         </div>
+
+        {hasError && displayError && (
+          <span id={`${alias}-error`} className="mito-input-error-text" role="alert">
+            <Icon name="error" width="12" height="12" aria-hidden="true" />
+            {typeof displayError === 'string' ? displayError : "Required field"}
+          </span>
+        )}
       </div>
     </Column>
   );

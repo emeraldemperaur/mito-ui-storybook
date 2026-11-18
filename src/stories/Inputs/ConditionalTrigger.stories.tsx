@@ -9,8 +9,49 @@ import { CurrencyInput } from './CurrencyInput';
 import { StockInput } from './StockInput';
 import { Row } from '../Layout/Row';
 import { GlobalUIContext } from '../Layout/GlobalUIContext';
+import type { InputOption } from '../../utils/Vinci';
 
-// Standalone wrapper for native state tracking
+const AI_OPTIONS: InputOption[] = [
+  { optionid: 1, text: 'GPT-4 Omni', optionvalue: 'gpt4' },
+  { optionid: 2, text: 'Claude 3.5 Sonnet', optionvalue: 'claude35' },
+  { optionid: 3, text: 'Llama 3 70B', optionvalue: 'llama3' },
+];
+
+const FINANCE_OPTIONS: InputOption[] = [
+  { optionid: 1, text: 'Equities (Stocks)', optionvalue: 'equities' },
+  { optionid: 2, text: 'Fixed Income Bonds', optionvalue: 'bonds' },
+  { optionid: 3, text: 'Derivatives & Options', optionvalue: 'derivatives' },
+];
+
+const AEROSPACE_OPTIONS: InputOption[] = [
+  { optionid: 1, text: 'Turbine Diagnostics', optionvalue: 'turbines' },
+  { optionid: 2, text: 'Avionics Telemetry', optionvalue: 'avionics' },
+  { optionid: 3, text: 'Fuselage Integrity', optionvalue: 'fuselage' },
+];
+
+const CONSTRUCTION_OPTIONS: InputOption[] = [
+  { optionid: 1, text: 'Structural Concrete', optionvalue: 'concrete' },
+  { optionid: 2, text: 'Load-Bearing Steel', optionvalue: 'steel' },
+  { optionid: 3, text: 'Insulation & Drywall', optionvalue: 'drywall' },
+];
+
+const METALLURGY_OPTIONS: InputOption[] = [
+  { optionid: 1, text: 'Titanium Alloys', optionvalue: 'titanium' },
+  { optionid: 2, text: 'High-Carbon Steel', optionvalue: 'carbonsteel' },
+  { optionid: 3, text: 'Aluminum Composites', optionvalue: 'aluminum' },
+];
+
+const MEDICAL_OPTIONS: InputOption[] = [
+  { optionid: 1, text: 'Cardiology', optionvalue: 'cardiology' },
+  { optionid: 2, text: 'Neurology', optionvalue: 'neurology' },
+  { optionid: 3, text: 'Oncology', optionvalue: 'oncology' },
+];
+
+type ConditionalStoryProps = ConditionalProps & {
+  triggerValueBool?: boolean;
+  triggerValueStr?: string;
+};
+
 const StatefulConditionalTrigger = (args: ConditionalProps) => {
   const [val, setVal] = useState<any>(args.triggerType === 'select' ? '' : false);
 
@@ -26,7 +67,6 @@ const StatefulConditionalTrigger = (args: ConditionalProps) => {
   );
 };
 
-// Typed decorator providing Mito UI context and TooltipProvider
 const withMitoContext: Decorator = (Story, context) => {
   const { design, darkMode, backgroundColor } = context.args as any;
   const useRow = context.parameters.useRow !== false;
@@ -75,7 +115,7 @@ const withMitoContext: Decorator = (Story, context) => {
  * Enterprise conditional layout primitive. Orchestrates smooth, animated DOM expansions linked to Formik or native state.
  * Supports Toggle (Switch), Checkbox, and Select trigger modalities to reveal deeply nested forms or advanced settings regions.
  */
-const meta: Meta<ConditionalProps> = {
+const meta: Meta<ConditionalStoryProps> = {
   title: 'Inputs/ConditionalTrigger',
   component: ConditionalTrigger,
   tags: ['autodocs'],
@@ -112,27 +152,44 @@ const meta: Meta<ConditionalProps> = {
     triggerType: {
       control: 'radio',
       options: ['toggle', 'checkbox', 'select'],
-      description: 'The interaction modality used to capture state and evaluate the conditional render.',
+      description: "The interaction modality used to capture state and evaluate the conditional render (`'toggle' | 'checkbox' | 'select'`).",
       table: { category: 'Core & Logic', defaultValue: { summary: 'toggle' } },
     },
+    
     triggerValue: {
-      control: 'text',
-      description: 'The exact value the field must strictly equal (`===`) to expand and reveal the child components. While represented as a text input in Storybook controls, it natively supports booleans, numbers, and strings in your application code.',
-      table: {
-        category: 'Core & Logic',
-        type: {
-          summary: 'string | boolean | number',
-          detail: 'Evaluates strictly (===) against the Formik state or local value.',
-        },
-      },
+      table: { disable: true }, 
     },
+    triggerValueBool: {
+      name: 'triggerValue',
+      control: 'boolean',
+      description: 'The exact value the field must strictly equal (`===`) to expand and reveal the child components.',
+      table: { category: 'Core & Logic', type: { summary: 'boolean' } },
+      if: { arg: 'triggerType', neq: 'select' },
+    },
+    triggerValueStr: {
+      name: 'triggerValue',
+      control: 'text',
+      description: 'The exact string the field must strictly equal (`===`) to expand and reveal the child components.',
+      table: { category: 'Core & Logic', type: { summary: 'string' } },
+      if: { arg: 'triggerType', eq: 'select' },
+    },
+
     inputLabel: {
       control: 'text',
       description: 'Text rendered alongside the toggle/checkbox, or statically above the select trigger.',
       table: { category: 'Core & Logic' },
     },
     inputOptions: {
-      control: 'object',
+      control: 'select',
+      options: ['AI', 'Finance', 'Aerospace', 'Construction', 'Metallurgy', 'Medical'],
+      mapping: {
+        AI: AI_OPTIONS,
+        Finance: FINANCE_OPTIONS,
+        Aerospace: AEROSPACE_OPTIONS,
+        Construction: CONSTRUCTION_OPTIONS,
+        Metallurgy: METALLURGY_OPTIONS,
+        Medical: MEDICAL_OPTIONS,
+      },
       description: 'Array of structural options (`{ optionid, optionvalue, text }`). Exclusively required if `triggerType` is `"select"`.',
       table: { category: 'Core & Logic' },
     },
@@ -140,6 +197,11 @@ const meta: Meta<ConditionalProps> = {
       control: 'text',
       description: 'Placeholder text shown when the `select` triggerType is empty.',
       table: { category: 'Core & Logic', defaultValue: { summary: 'Select an option' } },
+    },
+    children: {
+      control: false,
+      description: 'The React nodes (typically xForm Queries or nested Mito UI inputs) to reveal when the trigger condition is met.',
+      table: { category: 'Core & Logic' },
     },
     readOnly: {
       control: 'boolean',
@@ -217,45 +279,50 @@ const meta: Meta<ConditionalProps> = {
     },
 
     // --- Theming & Typography ---
-    activeColor: {
-      control: 'color',
+    activeColor: { 
+      control: 'color', 
       description: 'Highlight color applied to the active/focused borders, toggles, and checkboxes.',
-      table: { category: 'Theming' },
+      table: { category: 'Theming' } 
     },
-    backgroundColor: {
-      control: 'color',
+    backgroundColor: { 
+      control: 'color', 
       description: 'Dynamic base background color for light mode. Colors the container and well background.',
-      table: { category: 'Theming' },
+      table: { category: 'Theming' } 
     },
-    darkBackgroundColor: {
-      control: 'color',
+    darkBackgroundColor: { 
+      control: 'color', 
       description: 'Dynamic base background color specifically for dark mode contexts.',
-      table: { category: 'Theming' },
+      table: { category: 'Theming' } 
     },
-    textColor: {
-      control: 'color',
+    textColor: { 
+      control: 'color', 
       description: 'Standard text color for light mode.',
-      table: { category: 'Theming' },
+      table: { category: 'Theming' } 
     },
-    darkTextColor: {
-      control: 'color',
+    darkTextColor: { 
+      control: 'color', 
       description: 'Standard text color specifically for dark mode contexts.',
-      table: { category: 'Theming' },
+      table: { category: 'Theming' } 
     },
-    errorTextColor: {
-      control: 'color',
+    errorTextColor: { 
+      control: 'color', 
       description: 'Validation failure text color for light mode.',
-      table: { category: 'Theming' },
+      table: { category: 'Theming' } 
     },
-    darkErrorTextColor: {
-      control: 'color',
+    darkErrorTextColor: { 
+      control: 'color', 
       description: 'Validation failure text color for dark mode.',
-      table: { category: 'Theming' },
+      table: { category: 'Theming' } 
     },
-    fontFamily: {
-      control: 'text',
+    darkModeColors: {
+      control: 'object',
+      description: 'Legacy color override object specifying light/dark mode active colors. Prefer `activeColor` for standard implementations.',
+      table: { category: 'Theming' }
+    },
+    fontFamily: { 
+      control: 'text', 
       description: 'Font family override to match specific UI brand primitives.',
-      table: { category: 'Typography' },
+      table: { category: 'Typography' } 
     },
 
     // --- State & Events ---
@@ -264,23 +331,25 @@ const meta: Meta<ConditionalProps> = {
       description: 'External fallback state value for standalone non-Formik setups. If a `Formik` provider is present, the component automatically prioritizes the Formik pipeline state mapped via the `alias` key over this prop.',
       table: { category: 'State & Events' },
     },
-    onChange: {
-      action: 'onChange',
-      control: false,
+    onChange: { 
+      action: 'onChange', 
+      control: false, 
       description: 'Yields the raw value upon interaction. Automatically intercepts and propagates to Formik if present.',
-      table: { category: 'State & Events' },
+      table: { category: 'State & Events' } 
     },
-    formikContext: {
-      control: false,
+    formikContext: { 
+      control: false, 
       description: 'Explicit Formik context object injected when rendering nested workflows manually.',
-      table: { category: 'State & Events' },
+      table: { category: 'State & Events' } 
     },
   },
   args: {
     alias: 'enableAdvancedSettings',
     triggerType: 'toggle',
-    triggerValue: true,
+    triggerValueBool: true,           
+    triggerValueStr: 'equities',      
     inputLabel: 'Enable Advanced API Configuration',
+    inputOptions: 'Finance' as unknown as InputOption[],
     design: 'outline',
     darkMode: false,
     width: 12,
@@ -297,11 +366,16 @@ const meta: Meta<ConditionalProps> = {
     ),
   },
   decorators: [withMitoContext],
-  render: (args) => <StatefulConditionalTrigger {...args} />,
+  render: (args) => {
+    // Dynamically intercept the phantom args and assign them to the core triggerValue prop
+    const activeTriggerValue = args.triggerType === 'select' ? args.triggerValueStr : args.triggerValueBool;
+    
+    return <StatefulConditionalTrigger {...args} triggerValue={activeTriggerValue} />;
+  },
 };
 
 export default meta;
-type Story = StoryObj<ConditionalProps>;
+type Story = StoryObj<ConditionalStoryProps>;
 
 // ---------------------------------------------------------------------------
 // TRIGGER MODALITIES
@@ -313,14 +387,15 @@ export const ToggleTrigger: Story = {
     triggerType: 'toggle',
     alias: 'enableMarginTrading',
     inputLabel: 'Enable Equity Allocation & Margin Limit',
-    triggerValue: true,
+    triggerValueBool: true,
     activeColor: '#2563eb',
     children: (
       <>
         <StockInput
           alias="tickerSymbol"
-          inputLabel="Target Equity Ticker"
-          placeholder="AAPL"
+          inputLabel="Target Market Order"
+          placeholder="Order Amount"
+          tickerSymbol='SPCX'
           design="outline"
           width={6}
         />
@@ -349,7 +424,7 @@ export const CheckboxTrigger: Story = {
     triggerType: 'checkbox',
     alias: 'hasCustomDeposit',
     inputLabel: 'Specify a custom initial retainer deposit',
-    triggerValue: true,
+    triggerValueBool: true,
     activeColor: '#10b981',
     children: (
       <CurrencyInput
@@ -378,14 +453,10 @@ export const SelectTrigger: Story = {
     alias: 'assetClass',
     inputLabel: 'Primary Portfolio Asset Class',
     placeholder: 'Select an asset class...',
-    triggerValue: 'equities',
+    triggerValueStr: 'equities',
     backgroundColor: '#e0e5ec',
     textColor: '#1f2937',
-    inputOptions: [
-      { optionid: 1, optionvalue: 'cash', text: 'Money Market / Cash' },
-      { optionid: 2, optionvalue: 'bonds', text: 'Fixed Income Bonds' },
-      { optionid: 3, optionvalue: 'equities', text: 'Public Equities (Specify Ticker)' },
-    ],
+    inputOptions: FINANCE_OPTIONS,
     children: (
       <StockInput
         alias="primaryTicker"
@@ -400,7 +471,7 @@ export const SelectTrigger: Story = {
   parameters: {
     docs: {
       description: {
-        story: 'The `select` trigger evaluates against a dropdown payload. Selecting `"Public Equities"` satisfies `assetClass === "equities"` and reveals a recessed `neumorphic` `StockInput` inside the inset well.',
+        story: 'The `select` trigger evaluates against a dropdown payload. Selecting `"Equities (Stocks)"` satisfies `assetClass === "equities"` and reveals a recessed `neumorphic` `StockInput` inside the inset well.',
       },
     },
   },
@@ -412,7 +483,7 @@ export const SkeuomorphicDesign: Story = {
     triggerType: 'toggle',
     alias: 'overrideCap',
     inputLabel: 'Manual Treasury Disbursement Override',
-    triggerValue: true,
+    triggerValueBool: true,
     backgroundColor: '#e0e5ec',
     children: (
       <CurrencyInput
@@ -433,7 +504,7 @@ export const ValidationAndTooltips: Story = {
     triggerType: 'toggle',
     alias: 'requestAudit',
     inputLabel: 'Request Tier 3 Security Audit',
-    triggerValue: true,
+    triggerValueBool: true,
     isHinted: true,
     hintText: 'This will incur an additional compliance retainer fee.',
     errorText: 'Your account tier is ineligible for on-demand audits.',
@@ -458,7 +529,7 @@ export const ValidationAndTooltips: Story = {
  * Orchestrates multiple Mito UI primitives (`Input`, `CurrencyInput`, and `StockInput`) inside standalone `ConditionalTrigger` blocks using native React state.
  */
 export const StandaloneUsage: Story = {
-  render: (args: ConditionalProps) => {
+  render: (args: ConditionalStoryProps) => {
     const [wantsGiftWrap, setWantsGiftWrap] = useState<boolean>(false);
     const [settlementType, setSettlementType] = useState<string>('fiat');
 
@@ -498,7 +569,7 @@ export const StandaloneUsage: Story = {
             placeholder="Enter a message for the recipient..."
             design={args.design}
             value={giftMessage}
-            onChange={(val) => setGiftMessage(val)}
+            onChange={(val: string) => setGiftMessage(val)}
             width={12}
           />
         </ConditionalTrigger>
@@ -518,8 +589,9 @@ export const StandaloneUsage: Story = {
         >
           <StockInput
             alias="equityTicker"
-            inputLabel="Grant Ticker"
-            placeholder="MSFT"
+            inputLabel="Limit Order"
+            placeholder="Order Amount"
+            tickerSymbol='MSFT'
             design={args.design}
             value={equityTicker}
             onChange={(val) => setEquityTicker(val)}
@@ -557,6 +629,7 @@ export const StandaloneUsage: Story = {
   },
   args: {
     design: 'outline',
+    triggerValueBool: true,
   },
   parameters: {
     useRow: false,
@@ -606,7 +679,7 @@ export const StandaloneConditionalExample = () => {
           inputLabel="Recipient Note"
           placeholder="Enter a message..."
           value={giftMessage}
-          onChange={(val) => setGiftMessage(val)}
+          onChange={(e) => setGiftMessage(e.target.value)}
         />
       </ConditionalTrigger>
 
@@ -625,8 +698,9 @@ export const StandaloneConditionalExample = () => {
       >
         <StockInput
           alias="equityTicker"
-          inputLabel="Grant Ticker"
-          placeholder="MSFT"
+          inputLabel="Limit Order"
+          tickerSymbol='MSFT'
+          placeholder="Order Amount"
           value={equityTicker}
           onChange={(val) => setEquityTicker(val)}
           width={6}
@@ -656,8 +730,8 @@ export const StandaloneConditionalExample = () => {
  * **Interactive Form Pipeline (Formik Context):**
  * Demonstrates seamless zero-boilerplate binding of `ConditionalTrigger` alongside child Mito UI `Input`, `StockInput`, and `CurrencyInput` primitives inside a single `Formik` provider.
  */
-export const FormikIntegration: Story = {
-  render: (args: ConditionalProps) => {
+export const InteractiveFormTest: Story = {
+  render: (args: ConditionalStoryProps) => {
     return (
       <Formik
         initialValues={{
@@ -669,7 +743,7 @@ export const FormikIntegration: Story = {
         validationSchema={Yup.object({
           tickerSymbol: Yup.string().when('allocateEquities', {
             is: true,
-            then: (schema) => schema.required('Ticker symbol is required.'),
+            then: (schema) => schema.required('Limit order amount is required.'),
             otherwise: (schema) => schema.notRequired(),
           }),
           investmentAmount: Yup.string().when('allocateEquities', {
@@ -685,7 +759,6 @@ export const FormikIntegration: Story = {
       >
         {(formikProps) => (
           <Form style={{ display: 'flex', flexDirection: 'column', gap: '20px', width: '100%', fontFamily: 'system-ui, sans-serif' }}>
-            {/* Live Formik State Monitor */}
             <div
               style={{
                 backgroundColor: '#1e293b',
@@ -732,8 +805,9 @@ export const FormikIntegration: Story = {
               >
                 <StockInput
                   alias="tickerSymbol"
-                  inputLabel="Stock Symbol"
+                  inputLabel="Limit Order"
                   placeholder="AAPL"
+                  tickerSymbol='AAPL'
                   design={args.design}
                   width={6}
                 />
@@ -778,6 +852,7 @@ export const FormikIntegration: Story = {
   },
   args: {
     design: 'outline',
+    triggerValueBool: true,
   },
   parameters: {
     useRow: false,
@@ -800,7 +875,7 @@ export const FormikConditionalPipeline = () => {
       validationSchema={Yup.object({
         tickerSymbol: Yup.string().when('allocateEquities', {
           is: true,
-          then: (schema) => schema.required('Ticker symbol is required.'),
+          then: (schema) => schema.required('Limit order amount is required.'),
         }),
         investmentAmount: Yup.string().when('allocateEquities', {
           is: true,
@@ -819,8 +894,9 @@ export const FormikConditionalPipeline = () => {
         >
           <StockInput
             alias="tickerSymbol"
-            inputLabel="Stock Symbol"
+            inputLabel="Limit Order"
             placeholder="AAPL"
+            tickerSymbol='AAPL'
             width={6}
           />
           <CurrencyInput

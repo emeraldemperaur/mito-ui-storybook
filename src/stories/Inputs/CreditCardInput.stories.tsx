@@ -526,7 +526,7 @@ export const StandaloneCardExample = () => {
  * Demonstrates the seamless binding of `CreditCardInput` inside a `Formik` context. 
  * The `card-validator` library (which powers the icon swapping inside the component) can also be used in your Formik `validate` step to ensure the unmasked number is mathematically sound via Luhn checks.
  */
-export const FormikIntegration: Story = {
+export const InteractiveFormTest: Story = {
   render: (args) => {
     return (
       <Formik

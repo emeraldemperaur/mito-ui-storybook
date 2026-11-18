@@ -1,9 +1,10 @@
 "use client";
 
-import React, { useRef, useState, useEffect, type JSX } from "react";
+import React, { useRef, useState, useEffect, type JSX, useContext } from "react";
 import { Slot } from '@radix-ui/react-slot';
 import { adjustColor, getNearestParentBackground } from "../../utils/Vinci";
 import { useGlobalUIContext, type DesignVariant } from "../Layout/GlobalUIContext";
+import { FormikContext, type FormikContextType } from "formik";
 
 export type FABPosition = 'bottom-right' | 'bottom-left' | 'top-right' | 'top-left';
 
@@ -127,6 +128,10 @@ export interface FloatingActionButtonProps extends React.ButtonHTMLAttributes<HT
    * @default 'top-left'
    */
   lightSource?: 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right';
+  /** 
+   * @description Explicit Formik context object injected for nested step fields. 
+   */
+  formikContext?: FormikContextType<any>;
 
   /* --- Interaction Handlers --- */
   /** 
@@ -183,6 +188,7 @@ export const FloatingActionButton = React.forwardRef<HTMLButtonElement, Floating
   onTouchEnd,
   onMouseEnter,
   disabled,
+  formikContext,
   ...props
 }, ref): JSX.Element => {
 
@@ -192,7 +198,11 @@ export const FloatingActionButton = React.forwardRef<HTMLButtonElement, Floating
   const [isRippling, setIsRippling] = useState(false);
   
   const globalContext = useGlobalUIContext();
-  const isFormik = Boolean(globalContext.formikContext);
+  const fallbackContext = useContext(FormikContext) as FormikContextType<any> | undefined;
+  const activeContext = formikContext || fallbackContext;
+    
+  // Hybrid State Engine: Use Formik if available, else fallback to standard controlled props
+  const isFormik = activeContext !== undefined && typeof activeContext.setFieldValue === 'function';
   const themeClass = darkMode ? 'v-fab-dark' : '';
   const isReadOnly = disabled || globalContext.formikContext?.isSubmitting;
 

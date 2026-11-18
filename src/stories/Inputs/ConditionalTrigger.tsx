@@ -2,15 +2,14 @@
 
 import React, { useRef, useState, useEffect, useContext, createContext, type JSX, type ReactNode, useId } from "react";
 import { Slot } from '@radix-ui/react-slot';
-import { type FormikContextType, useFormikContext, getIn } from 'formik';
-import { Box, Flex, Text, Switch, Checkbox, Select } from '@radix-ui/themes';
+import { FormikContext, getIn, type FormikContextType } from "formik";
 import * as TooltipPrimitive from '@radix-ui/react-tooltip';
 import { type InputOption, adjustColor, getNearestParentBackground } from "../../utils/Vinci";
 import { Column } from "../Layout/Column";
 import { Row } from "../Layout/Row"; 
 import { Icon } from "../../components/icons/Icons";
 import { sharedInputStyles } from "./types";
-import type { InputDesign } from "./Input";
+import { type InputDesign } from "./Input";
 
 export type TriggerType = 'toggle' | 'checkbox' | 'select';
 
@@ -42,6 +41,14 @@ export interface ConditionalProps extends Omit<React.HTMLAttributes<HTMLDivEleme
    * @required
    */
   triggerValue: any;
+  /** 
+   * @description The explicit boolean value that triggers the condition.
+   */
+  triggerValueBool?: boolean;
+  /** 
+   * @description The explicit string value that triggers the condition.
+   */
+  triggerValueStr?: string;
   /** 
    * @description The React nodes (typically xForm Queries) to reveal when the trigger condition is met. 
    * @required
@@ -181,6 +188,8 @@ export const ConditionalTrigger = React.forwardRef<HTMLDivElement, ConditionalPr
   design = 'outline',
   triggerType = 'toggle',
   triggerValue = true,
+  triggerValueBool,
+  triggerValueStr,
   inputOptions = [],
   children,
   inputLabel,
@@ -217,15 +226,14 @@ export const ConditionalTrigger = React.forwardRef<HTMLDivElement, ConditionalPr
   const internalId = useId();
 
   const globalContext = useContext(GlobalFormContext);
-  const defaultFormikContext = useFormikContext<any>();
-  const activeContext = formikContext || defaultFormikContext;
-
-  // Hybrid State Engine: Use Formik if actively mounted, else fallback to standard controlled props
-  const isFormik = Boolean(activeContext && activeContext.setFieldValue);
-
-  const fieldValue = isFormik ? getIn(activeContext.values, alias) : value;
-  const fieldTouched = isFormik ? getIn(activeContext.touched, alias) : null;
-  const fieldError = isFormik ? getIn(activeContext.errors, alias) : null;
+  const fallbackContext = useContext(FormikContext) as FormikContextType<any> | undefined;
+    const activeContext = formikContext || fallbackContext;
+    
+    // Hybrid State Engine: Use Formik if available, else fallback to standard controlled props
+    const isFormik = activeContext !== undefined && typeof activeContext.setFieldValue === 'function';
+    const fieldValue = isFormik ? getIn(activeContext!.values, alias) : value;
+    const fieldError = isFormik ? getIn(activeContext!.errors, alias) : null;
+    const fieldTouched = isFormik ? getIn(activeContext!.touched, alias) : null;
 
   const inputId = `${alias}-trigger-${internalId}`;
   const regionId = `${alias}-region-${internalId}`;
@@ -268,73 +276,84 @@ export const ConditionalTrigger = React.forwardRef<HTMLDivElement, ConditionalPr
   const renderTrigger = () => {
     if (triggerType === 'checkbox') {
         return (
-          <Flex align="center" gap="3" style={{ cursor: isReadOnly ? 'default' : 'pointer', width: '100%' }}>
-            <Checkbox 
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', cursor: isReadOnly ? 'default' : 'pointer', width: '100%' }}>
+            <button 
+              type="button"
               id={inputId}
               name={alias}
               disabled={isReadOnly}
-              checked={fieldValue === true} 
-              onCheckedChange={(checked) => handleChange(!!checked)} 
+              role="checkbox"
+              aria-checked={fieldValue === true} 
+              data-state={fieldValue === true ? "checked" : "unchecked"}
+              onClick={() => handleChange(fieldValue !== true)}
               aria-expanded={isOpen}
               aria-controls={regionId}
               className={`mito-cond-checkbox mito-cond-checkbox-${design}`}
-            />
-            <Text as="label" size="2" weight="bold" htmlFor={inputId} style={{ cursor: isReadOnly ? 'default' : 'pointer', color: 'var(--scoped-text)', flex: 1 }}>
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" style={{ opacity: fieldValue === true ? 1 : 0, transition: 'opacity 0.2s' }}>
+                <polyline points="20 6 9 17 4 12"></polyline>
+              </svg>
+            </button>
+            <label htmlFor={inputId} style={{ cursor: isReadOnly ? 'default' : 'pointer', color: 'var(--scoped-text)', fontWeight: 'bold', fontSize: '0.875rem', flex: 1 }}>
                 {inputLabel}
-            </Text>
-          </Flex>
+            </label>
+          </div>
         );
     } 
     else if (triggerType === 'select') {
         return (
-          <Flex direction="column" gap="2" style={{ width: '100%' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', width: '100%' }}>
             {inputLabel && (
-              <Text as="label" size="2" weight="bold" htmlFor={inputId} style={{ color: 'var(--scoped-text)' }}>
+              <label htmlFor={inputId} style={{ color: 'var(--scoped-text)', fontWeight: 'bold', fontSize: '0.875rem' }}>
                   {inputLabel}
-              </Text>
+              </label>
             )}
-            <Select.Root
-              name={alias}
-              disabled={isReadOnly}
-              value={fieldValue !== undefined && fieldValue !== null ? String(fieldValue) : ""}
-              onValueChange={handleChange}
-            >
-              <Select.Trigger 
+            <div style={{ position: 'relative', width: '100%' }}>
+              <select
                 id={inputId}
+                name={alias}
+                disabled={isReadOnly}
+                value={fieldValue !== undefined && fieldValue !== null ? String(fieldValue) : ""}
+                onChange={(e) => handleChange(e.target.value)}
                 aria-expanded={isOpen}
                 aria-controls={regionId}
-                className={`mito-cond-select mito-cond-select-${design}`}
-                style={{ width: '100%', color: 'var(--scoped-text)' }}
-                placeholder={placeholder}
-              />
-              <Select.Content className={`mito-cond-select-content-${design} ${themeClass}`} style={{ backgroundColor: 'var(--scoped-bg)', color: 'var(--scoped-text)' }}>
+                className={`mito-cond-select mito-cond-select-${design} ${themeClass}`}
+                style={{ width: '100%', color: 'var(--scoped-text)', appearance: 'none', cursor: isReadOnly ? 'default' : 'pointer' }}
+              >
+                <option value="" disabled hidden>{placeholder}</option>
                 {inputOptions.map((inputoption, idx) => (
-                  <Select.Item key={`${alias}-opt-${inputoption.optionid || idx}`} value={String(inputoption.optionvalue)} style={{ cursor: 'pointer', borderRadius: '4px' }}>
+                  <option key={`${alias}-opt-${inputoption.optionid || idx}`} value={String(inputoption.optionvalue)}>
                     {inputoption.text}
-                  </Select.Item>
+                  </option>
                 ))}
-              </Select.Content>
-            </Select.Root>
-          </Flex>
+              </select>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--scoped-placeholder)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }}>
+                <polyline points="6 9 12 15 18 9"></polyline>
+              </svg>
+            </div>
+          </div>
         );
     } 
     else {
         return (
-          <Flex justify="between" align="center" style={{ width: '100%' }}>
-            <Text as="label" size="2" weight="bold" htmlFor={inputId} style={{ cursor: isReadOnly ? 'default' : 'pointer', color: 'var(--scoped-text)', flex: 1 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
+            <label htmlFor={inputId} style={{ cursor: isReadOnly ? 'default' : 'pointer', color: 'var(--scoped-text)', fontWeight: 'bold', fontSize: '0.875rem', flex: 1 }}>
                 {inputLabel}
-            </Text>
-            <Switch 
+            </label>
+            <button 
+              type="button"
               id={inputId}
               name={alias}
               disabled={isReadOnly}
-              checked={fieldValue === true} 
-              onCheckedChange={(checked) => handleChange(!!checked)} 
+              role="switch"
+              aria-checked={fieldValue === true} 
+              data-state={fieldValue === true ? "checked" : "unchecked"}
+              onClick={() => handleChange(fieldValue !== true)}
               aria-expanded={isOpen}
               aria-controls={regionId}
               className={`mito-cond-switch mito-cond-switch-${design}`}
             />
-          </Flex>
+          </div>
         );
     }
   };
@@ -409,9 +428,30 @@ export const ConditionalTrigger = React.forwardRef<HTMLDivElement, ConditionalPr
             margin-top: 16px; padding-top: 16px;
             border-top: 1px dashed var(--scoped-border);
           }
-          .mito-cond-switch-outline { background-color: var(--scoped-border); }
+          
+          /* Native Select */
+          .mito-cond-select-outline { border: 1px solid var(--scoped-border); background-color: transparent; height: 40px; border-radius: 6px; padding: 0 12px; }
+          .mito-cond-select-outline:focus-visible { border-color: var(--scoped-active); outline: 1px solid var(--scoped-active); }
+          
+          /* Switch */
+          .mito-cond-switch-outline {
+            all: unset; width: 44px; height: 24px; border-radius: 12px; background-color: var(--scoped-border);
+            position: relative; cursor: pointer; transition: background-color 0.3s; flex-shrink: 0;
+          }
           .mito-cond-switch-outline[data-state="checked"] { background-color: var(--scoped-active); }
-          .mito-cond-select-outline { border: 1px solid var(--scoped-border); background-color: transparent; height: 40px; border-radius: 6px; }
+          .mito-cond-switch-outline::before {
+            content: ''; position: absolute; width: 18px; height: 18px; border-radius: 50%; top: 3px; left: 3px;
+            background-color: var(--scoped-bg); transition: transform 0.3s ease; box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+          }
+          .mito-cond-switch-outline[data-state="checked"]::before { transform: translateX(20px); }
+          
+          /* Checkbox */
+          .mito-cond-checkbox-outline {
+            all: unset; width: 20px; height: 20px; border-radius: 4px; border: 1px solid var(--scoped-border);
+            background-color: var(--scoped-bg); display: flex; align-items: center; justify-content: center;
+            cursor: pointer; transition: all 0.2s; box-sizing: border-box; color: transparent; flex-shrink: 0;
+          }
+          .mito-cond-checkbox-outline[data-state="checked"] { background-color: var(--scoped-active); border-color: var(--scoped-active); color: #fff; }
 
           /* ------------------------- */
           /* MATERIAL DESIGN           */
@@ -432,10 +472,31 @@ export const ConditionalTrigger = React.forwardRef<HTMLDivElement, ConditionalPr
             border-radius: 0 0 8px 8px;
           }
           .mito-conditional-container.mito-input-dark .mito-cond-well-material { background-color: rgba(255,255,255,0.02); }
-          .mito-cond-switch-material { background-color: var(--scoped-border); box-shadow: 0 2px 4px rgba(0,0,0,0.1) inset; }
-          .mito-cond-switch-material[data-state="checked"] { background-color: var(--scoped-active); }
-          .mito-cond-select-material { border: none; border-bottom: 2px solid var(--scoped-border); background-color: rgba(0,0,0,0.02); border-radius: 4px 4px 0 0; height: 40px; }
+          
+          /* Native Select */
+          .mito-cond-select-material { border: none; border-bottom: 2px solid var(--scoped-border); background-color: rgba(0,0,0,0.02); border-radius: 4px 4px 0 0; height: 40px; padding: 0 12px; }
           .mito-conditional-container.mito-input-dark .mito-cond-select-material { background-color: rgba(255,255,255,0.02); }
+          .mito-cond-select-material:focus-visible { border-bottom-color: var(--scoped-active); outline: none; }
+          
+          /* Switch */
+          .mito-cond-switch-material {
+            all: unset; width: 40px; height: 20px; border-radius: 10px; background-color: var(--scoped-border);
+            position: relative; cursor: pointer; transition: background-color 0.3s; box-shadow: inset 0 2px 4px rgba(0,0,0,0.1); flex-shrink: 0;
+          }
+          .mito-cond-switch-material[data-state="checked"] { background-color: var(--scoped-active); }
+          .mito-cond-switch-material::before {
+            content: ''; position: absolute; width: 24px; height: 24px; border-radius: 50%; top: -2px; left: -2px;
+            background-color: var(--scoped-bg); transition: transform 0.3s ease; box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+          }
+          .mito-cond-switch-material[data-state="checked"]::before { transform: translateX(20px); background-color: var(--scoped-bg); }
+          
+          /* Checkbox */
+          .mito-cond-checkbox-material {
+            all: unset; width: 20px; height: 20px; border-radius: 2px; border: 2px solid var(--scoped-border);
+            background-color: transparent; display: flex; align-items: center; justify-content: center;
+            cursor: pointer; transition: all 0.2s; box-sizing: border-box; color: transparent; flex-shrink: 0;
+          }
+          .mito-cond-checkbox-material[data-state="checked"] { background-color: var(--scoped-active); border-color: var(--scoped-active); color: #fff; }
 
           /* ------------------------- */
           /* NEUMORPHIC DESIGN         */
@@ -457,7 +518,7 @@ export const ConditionalTrigger = React.forwardRef<HTMLDivElement, ConditionalPr
           .mito-cond-switch-neumorphic {
             all: unset; width: 50px; height: 28px; border-radius: 14px; background-color: var(--mito-input-bg-env);
             box-shadow: inset 2px 2px 5px var(--mito-input-shadow-dark), inset -2px -2px 5px var(--mito-input-shadow-light);
-            position: relative; cursor: pointer; transition: background-color 0.3s;
+            position: relative; cursor: pointer; transition: background-color 0.3s; flex-shrink: 0;
           }
           .mito-cond-switch-neumorphic[data-state="checked"] { background-color: var(--scoped-active); }
           .mito-cond-switch-neumorphic::before {
@@ -473,6 +534,7 @@ export const ConditionalTrigger = React.forwardRef<HTMLDivElement, ConditionalPr
             all: unset; width: 24px; height: 24px; border-radius: 6px; background-color: var(--mito-input-bg-env);
             box-shadow: 2px 2px 5px var(--mito-input-shadow-dark), -2px -2px 5px var(--mito-input-shadow-light);
             display: flex; align-items: center; justify-content: center; transition: all 0.2s; cursor: pointer;
+            box-sizing: border-box; color: transparent; flex-shrink: 0;
           }
           .mito-cond-checkbox-neumorphic[data-state="checked"] {
             box-shadow: inset 2px 2px 4px var(--mito-input-shadow-dark), inset -2px -2px 4px var(--mito-input-shadow-light);
@@ -488,14 +550,7 @@ export const ConditionalTrigger = React.forwardRef<HTMLDivElement, ConditionalPr
             transition: all 0.2s; font-weight: 500;
           }
           .mito-cond-select-neumorphic:focus-visible { outline: 2px solid var(--scoped-active); outline-offset: -2px; }
-          .mito-cond-select-neumorphic[aria-expanded="true"] {
-            box-shadow: inset 2px 2px 4px var(--mito-input-shadow-dark), inset -2px -2px 4px var(--mito-input-shadow-light);
-          }
-          .mito-cond-select-content-neumorphic {
-            background-color: var(--mito-input-bg-env); border-radius: 12px; border: none; padding: 8px;
-            box-shadow: 8px 8px 16px var(--mito-input-shadow-dark), -8px -8px 16px var(--mito-input-shadow-light);
-          }
-
+          
           /* ------------------------- */
           /* SKEUOMORPHIC DESIGN       */
           /* ------------------------- */
@@ -530,7 +585,7 @@ export const ConditionalTrigger = React.forwardRef<HTMLDivElement, ConditionalPr
             background-image: linear-gradient(to bottom, rgba(0,0,0,0.1) 0%, rgba(255,255,255,0.1) 100%);
             box-shadow: inset 0 2px 4px rgba(0,0,0,0.2), 0 1px 0 rgba(255,255,255,0.8);
             border: 1px solid rgba(0,0,0,0.3);
-            position: relative; cursor: pointer; transition: background-color 0.3s;
+            position: relative; cursor: pointer; transition: background-color 0.3s; flex-shrink: 0;
           }
           .mito-cond-switch-skeuomorphic[data-state="checked"] { background-color: var(--scoped-active); }
           .mito-cond-switch-skeuomorphic::before {
@@ -548,6 +603,7 @@ export const ConditionalTrigger = React.forwardRef<HTMLDivElement, ConditionalPr
             box-shadow: inset 0 2px 4px rgba(0,0,0,0.2), 0 1px 0 rgba(255,255,255,0.8);
             border: 1px solid rgba(0,0,0,0.3);
             display: flex; align-items: center; justify-content: center; transition: all 0.2s; cursor: pointer;
+            box-sizing: border-box; color: transparent; flex-shrink: 0;
           }
           .mito-cond-checkbox-skeuomorphic[data-state="checked"] {
             background-color: var(--scoped-active);
@@ -562,48 +618,42 @@ export const ConditionalTrigger = React.forwardRef<HTMLDivElement, ConditionalPr
             border: 1px solid rgba(0,0,0,0.2);
             transition: all 0.2s; font-weight: 500;
           }
-          .mito-cond-select-skeuomorphic[aria-expanded="true"] {
-            box-shadow: inset 0 2px 6px rgba(0,0,0,0.2), 0 0 0 2px rgba(37, 99, 235, 0.4);
-          }
-          .mito-cond-select-content-skeuomorphic {
-            background-color: var(--mito-input-bg-env); border-radius: 6px; padding: 4px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.2); border: 1px solid rgba(0,0,0,0.2);
+          .mito-cond-select-skeuomorphic:focus-visible {
+            box-shadow: inset 0 2px 6px rgba(0,0,0,0.2), 0 0 0 2px rgba(37, 99, 235, 0.4); outline: none;
           }
         `}} />
 
-        <Box>
-          <Flex justify="between" align="center" width="100%">
-            {renderTrigger()}
-            {isHinted && (
-                <TooltipPrimitive.Provider delayDuration={300}>
-                  <TooltipPrimitive.Root>
-                    <TooltipPrimitive.Trigger asChild>
-                      <a href={hintUrl || "#"} target="_blank" rel="noopener noreferrer" style={{ display: 'flex', alignItems: 'center', pointerEvents: 'auto', marginLeft: '12px' }}>
-                        <Icon name="questionmarkcircled" height="18" width="18" style={{ cursor: 'pointer', color: 'var(--scoped-placeholder)' }} />
-                      </a>
-                    </TooltipPrimitive.Trigger>
-                    <TooltipPrimitive.Portal>
-                      <TooltipPrimitive.Content 
-                        sideOffset={5} 
-                        style={{ 
-                          backgroundColor: darkMode ? '#374151' : '#111827', 
-                          color: '#f9fafb', 
-                          padding: '6px 10px', 
-                          borderRadius: '4px', 
-                          fontSize: '0.75rem',
-                          fontFamily: 'inherit',
-                          zIndex: 50
-                        }}
-                      >
-                        {hintText || "Information"}
-                        <TooltipPrimitive.Arrow style={{ fill: darkMode ? '#374151' : '#111827' }} />
-                      </TooltipPrimitive.Content>
-                    </TooltipPrimitive.Portal>
-                  </TooltipPrimitive.Root>
-                </TooltipPrimitive.Provider>
-            )} 
-          </Flex>
-        </Box>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
+          {renderTrigger()}
+          {isHinted && (
+              <TooltipPrimitive.Provider delayDuration={300}>
+                <TooltipPrimitive.Root>
+                  <TooltipPrimitive.Trigger asChild>
+                    <a href={hintUrl || "#"} target="_blank" rel="noopener noreferrer" style={{ display: 'flex', alignItems: 'center', pointerEvents: 'auto', marginLeft: '12px' }}>
+                      <Icon name="questionmarkcircled" height="18" width="18" style={{ cursor: 'pointer', color: 'var(--scoped-placeholder)' }} />
+                    </a>
+                  </TooltipPrimitive.Trigger>
+                  <TooltipPrimitive.Portal>
+                    <TooltipPrimitive.Content 
+                      sideOffset={5} 
+                      style={{ 
+                        backgroundColor: darkMode ? '#374151' : '#111827', 
+                        color: '#f9fafb', 
+                        padding: '6px 10px', 
+                        borderRadius: '4px', 
+                        fontSize: '0.75rem',
+                        fontFamily: 'inherit',
+                        zIndex: 50
+                      }}
+                    >
+                      {hintText || "Information"}
+                      <TooltipPrimitive.Arrow style={{ fill: darkMode ? '#374151' : '#111827' }} />
+                    </TooltipPrimitive.Content>
+                  </TooltipPrimitive.Portal>
+                </TooltipPrimitive.Root>
+              </TooltipPrimitive.Provider>
+          )} 
+        </div>
 
         <div 
           id={regionId}
@@ -618,21 +668,21 @@ export const ConditionalTrigger = React.forwardRef<HTMLDivElement, ConditionalPr
           }}
         >
           <div style={{ overflow: 'hidden', minHeight: 0 }}>
-             <Box className={`mito-cond-well mito-cond-well-${design}`}>
+             <div className={`mito-cond-well mito-cond-well-${design}`}>
                <Row>
                  {children}
                </Row>
-             </Box>
+             </div>
           </div>
         </div>
 
         {hasError && displayError && (
-          <Box mt="3">
-            <Text id={errorId} role="alert" size="2" style={{ color: 'var(--scoped-error)', fontWeight: 500 }}>
-                <Icon name="error" width="12" height="12" aria-hidden="true" style={{ marginRight: '4px' }} />
+          <div style={{ marginTop: '12px' }}>
+            <span id={errorId} role="alert" style={{ display: 'flex', alignItems: 'center', gap: '4px', color: 'var(--scoped-error)', fontWeight: 500, fontSize: '0.875rem' }}>
+                <Icon name="error" width="12" height="12" aria-hidden="true" />
                 {typeof displayError === 'string' ? displayError : "Required condition unmet"}
-            </Text>
-          </Box>
+            </span>
+          </div>
         )}      
       </Comp>
     </Column>

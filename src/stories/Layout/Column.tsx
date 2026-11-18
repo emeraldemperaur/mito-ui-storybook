@@ -1,8 +1,7 @@
 "use client";
 
 import React from 'react';
-import { Box } from '@radix-ui/themes';
-import type { BoxProps } from '@radix-ui/themes';
+import { Slot } from '@radix-ui/react-slot';
 import '../../styles/Layout.scss';
 
 /**
@@ -12,11 +11,11 @@ import '../../styles/Layout.scss';
 export type ColSize = number | "auto" | boolean;
 
 /**
- * @type ColProps
- * @description Responsive grid item properties. Uses an intersection type (&) 
- * instead of an interface to safely extend Radix's complex BoxProps type.
+ * @interface ColProps
+ * @description Responsive grid item properties. Safely extends standard HTML div attributes
+ * to provide an isolated, theme-agnostic layout column.
  */
-export type ColProps = Omit<BoxProps, 'gridColumn'> & React.AriaAttributes & {
+export interface ColProps extends Omit<React.HTMLAttributes<HTMLDivElement>, 'color'> {
     /** 
      * @description Base column span number (1 - 12). 
      * Dictates how many tracks the column occupies on the grid.
@@ -64,11 +63,12 @@ export type ColProps = Omit<BoxProps, 'gridColumn'> & React.AriaAttributes & {
      * @description Child nodes for the column layout block. 
      */
     children?: React.ReactNode;
-};
+}
 
 /**
  * @component Column
- * @description Responsive grid item. Maps breakpoints flawlessly to CSS Grid tracks using local CSS variables, bypassing external grid limitations.
+ * @description Responsive grid item. Maps breakpoints flawlessly to CSS Grid tracks using local CSS variables, 
+ * bypassing external grid limitations and Radix Theme dependencies.
  */
 export const Column = React.forwardRef<HTMLDivElement, ColProps>(({ 
     newLine, 
@@ -85,6 +85,8 @@ export const Column = React.forwardRef<HTMLDivElement, ColProps>(({
     ...props 
 }, ref) => {
     
+    const Component = asChild ? Slot : "div";
+
     const getSpan = (value?: ColSize): string | undefined => {
         if (value === undefined) return undefined;
         let spanStr = "";
@@ -108,15 +110,14 @@ export const Column = React.forwardRef<HTMLDivElement, ColProps>(({
     Object.keys(customStyles).forEach(key => customStyles[key] === undefined && delete customStyles[key]);
 
     return (
-        <Box
+        <Component
             ref={ref}
-            asChild={asChild}
             className={`mito-layout-col ${className || ""}`}
             style={customStyles}
             {...props}
         >
             {children}
-        </Box>
+        </Component>
     );
 });
 

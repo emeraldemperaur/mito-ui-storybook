@@ -1,38 +1,201 @@
 "use client";
 
-import React, { useRef, useState, useEffect, type JSX } from "react";
-import { useFormikContext, getIn } from "formik";
-import { Flex, Text, RadioGroup, Grid, Tooltip } from '@radix-ui/themes';
-import { adjustColor, getNearestParentBackground, type InputOption } from "../../utils/Vinci";
+import React, { useRef, useState, useEffect, type JSX, useId, useContext } from "react";
+import { getIn, type FormikContextType, FormikContext } from "formik";
+import { Slot } from '@radix-ui/react-slot';
+import * as TooltipPrimitive from '@radix-ui/react-tooltip';
+import { type InputOption, adjustColor, getNearestParentBackground } from "../../utils/Vinci";
 import { Icon } from "../../components/icons/Icons";
 import { Column } from "../Layout/Column"; 
-import { type BaseInputProps, sharedInputStyles } from "../../utils/types";
-import '../../styles/main.scss';
+import { sharedInputStyles } from "./types";
+import { type InputDesign } from "./Input";
 
-export interface RadioGroupProps extends BaseInputProps {
-  /** Array of structured objects determining the available radio selections. */
+/**
+ * @interface RadioGroupProps
+ * @description Strongly-typed attributes mapping Formik or standalone state to a single-selection radio group.
+ * Optimized for MCP context-injection to ensure flawless conditional logic in complex pipelines.
+ */
+export interface RadioGroupProps extends Omit<React.HTMLAttributes<HTMLDivElement>, 'onChange' | 'defaultValue'> {
+  /** 
+   * @description Unique identifier mapping the input group to its Formik state and DOM label. 
+   * @required
+   */
+  alias: string;
+  /** 
+   * @description Array of structured objects determining the available radio selections. 
+   * @required
+   */
   options: InputOption[];
-  /** Directional flow of the radio layout grid. @default 'column' */
+  /** 
+   * @description Text rendered above the radio group or floating over the fieldset border.
+   */
+  inputLabel?: string;
+  /** 
+   * @description Directional flow of the radio layout grid. 
+   * @default 'column' 
+   */
   direction?: 'row' | 'column';
-  /** Explicit CSS Grid template column definitions (e.g. "1fr 1fr"). */
+  /** 
+   * @description Explicit CSS Grid template column definitions (e.g. "1fr 1fr"). Overrides direction default.
+   */
   columns?: string;
+  /** 
+   * @description Toggles the interactive floating label animation (primarily used with the 'outline' variant fieldset).
+   * @default false
+   */
+  floatingLabel?: boolean;
+  /**
+   * @description The core architectural design variant of the radio buttons.
+   * - `material`: Minimalist with vibrant color fill animations.
+   * - `outline`: Crisp bordered aesthetic.
+   * - `neumorphic`: Soft, extruded physical surface utilizing inset shadows.
+   * - `skeuomorphic`: High-fidelity 3D realistic mechanical input well.
+   * @default 'outline'
+   */
+  design?: InputDesign;
+  /** 
+   * @description Optional icon node rendered inside the group header or label. 
+   */
+  icon?: React.ReactNode;
+  /** 
+   * @description Determines if the icon is placed on the left (leading) or right (trailing) of the label.
+   * @default "left"
+   */
+  iconPosition?: 'left' | 'right';
+  /** 
+   * @description Forces the component into dark mode, overriding system or parent theme contexts. 
+   */
+  darkMode?: boolean;
+  /** 
+   * @description Legacy color override object. Prefer `activeColor` for standard implementations.
+   */
+  darkModeColors?: { light: string; dark: string };
+  /** 
+   * @description Dynamic base background color for light mode. Injected as `--mito-input-bg`.
+   */
+  backgroundColor?: string;
+  /** 
+   * @description Dynamic base background color specifically for dark mode contexts.
+   */
+  darkBackgroundColor?: string;
+  /** 
+   * @description Standard text and icon color for light mode. Injected as `--mito-input-text`.
+   */
+  textColor?: string;
+  /** 
+   * @description Standard text and icon color specifically for dark mode contexts.
+   */
+  darkTextColor?: string;
+  /** 
+   * @description Validation failure text color for light mode. Injected as `--mito-input-error`.
+   */
+  errorTextColor?: string;
+  /** 
+   * @description Validation failure text color for dark mode. Injected as `--mito-input-error-dark`.
+   */
+  darkErrorTextColor?: string;
+  /** 
+   * @description Highlight color applied to the active/checked borders and backgrounds. 
+   */
+  activeColor?: string;
+  /** 
+   * @description Font family override to match specific UI brand primitives. 
+   */
+  fontFamily?: string;
+  /** 
+   * @description Toggles an active hint tooltip next to the label. 
+   */
+  isHinted?: boolean;
+  /** 
+   * @description The informational text displayed inside the hint tooltip. 
+   */
+  hintText?: string;
+  /** 
+   * @description Optional URL to open when the hint tooltip icon is clicked. 
+   */
+  hintUrl?: string;
+  /** 
+   * @description Explicit error message string. Overrides Formik validation errors if provided. 
+   */
+  errorText?: string;
+  /** 
+   * @description Viewport column width configuration value (1 to 12). 
+   * @default 12 
+   */
+  width?: number;
+  /** 
+   * @description Forces container layouts to break downward onto a fresh structural row line. 
+   */
+  newRow?: boolean;
+  /** 
+   * @description Locks the component to prevent user interaction, rendering a disabled visual state.
+   * @default false
+   */
+  readOnly?: boolean;
+  /** 
+   * @description Opacity multiplier for the Neumorphic shadow intensity to ensure WCAG contrast. 
+   * @default 1 
+   */
+  neuIntensity?: number;
+  /** 
+   * @description Specific custom style class selector appended to the root container. 
+   */
+  className?: string;
+  /** 
+   * @description Inline modification style rules object. 
+   */
+  style?: React.CSSProperties;
+  /** 
+   * @description Explicit Formik context object injected for nested step fields. 
+   */
+  formikContext?: FormikContextType<any>;
+  /** 
+   * @description External fallback state string value for standalone non-Formik setups.
+   */
+  value?: string;
+  /** 
+   * @description Initial default string value for uncontrolled usage.
+   */
+  defaultValue?: string;
+  /** 
+   * @description If true, merges component DOM into the immediate child via Radix Slot. 
+   * @default false 
+   */
+  asChild?: boolean;
+  /** 
+   * @description Standalone string value callback for external state management. 
+   */
+  onChange?: (value: string) => void;
+  /** 
+   * @description Yields the complete InputOption object and its new checked state when toggled, allowing access to injected tags/scores.
+   */
+  onOptionChange?: (option: InputOption, isChecked: boolean) => void;
 }
 
 /**
  * @component RadioGroupInput
- * @description Single-selection group mapping values to strict AI constraints. Supports Outline, Material, and Neumorphic designs.
+ * @description Master SSR-safe single-selection group mapped to strict form states. Supports Neumorphic ambient-background matching, dynamic Formik injection, and global dark mode token overrides.
  */
 export const RadioGroupInput = React.forwardRef<HTMLDivElement, RadioGroupProps>(({
   alias,
+  options = [],
   inputLabel,
-  options,
-  design = 'outline',
+  floatingLabel = false,
   direction = 'column',
   columns,
-  elevation = 3,
-  surface = 'flat',         
-  lightSource = 'top-left', 
+  design = 'outline',
+  icon,
+  iconPosition = 'left',
+  darkMode = false,
   darkModeColors,
+  backgroundColor,
+  darkBackgroundColor,
+  textColor,
+  darkTextColor,
+  errorTextColor,
+  darkErrorTextColor,
+  activeColor,
+  fontFamily,
   width = 12,
   newRow,
   readOnly,
@@ -40,126 +203,349 @@ export const RadioGroupInput = React.forwardRef<HTMLDivElement, RadioGroupProps>
   hintText,
   hintUrl,
   errorText,
+  neuIntensity = 1,
   className = "",
   style,
   formikContext,
   value,
+  defaultValue,
+  asChild = false,
   onChange,
-  defaultValue,             
+  onOptionChange,
   ...props
-}, ref): JSX.Element => {
+}, _ref): JSX.Element => {
   const containerRef = useRef<HTMLDivElement>(null);
   const [neuVars, setNeuVars] = useState<React.CSSProperties>({});
+  const [isFocused, setIsFocused] = useState(false);
+  const internalId = useId();
 
-  const fallbackContext = useFormikContext<any>();
+  const fallbackContext = useContext(FormikContext) as FormikContextType<any> | undefined;
   const activeContext = formikContext || fallbackContext;
-  
-  const isFormik = Boolean(activeContext);
-  const fieldValue = isFormik ? getIn(activeContext.values, alias) : value;
-  const fieldError = isFormik ? getIn(activeContext.errors, alias) : null;
-  const fieldTouched = isFormik ? getIn(activeContext.touched, alias) : null;
+    
+  // Hybrid State Engine: Use Formik if available, else fallback to standard controlled props
+  const isFormik = activeContext !== undefined && typeof activeContext.setFieldValue === 'function';
+  const rawFieldValue = isFormik ? getIn(activeContext!.values, alias) : value;
+  const fieldError = isFormik ? getIn(activeContext!.errors, alias) : null;
+  const fieldTouched = isFormik ? getIn(activeContext!.touched, alias) : null;
   
   const hasError = Boolean((fieldTouched && fieldError) || errorText);
   const displayError = errorText || fieldError;
+  const currentVal = rawFieldValue !== undefined && rawFieldValue !== null ? String(rawFieldValue) : "";
+  const hasValue = currentVal !== "";
+  const isFloating = floatingLabel && (isFocused || hasValue);
+  isFloating;
+
+  const themeClass = darkMode ? 'mito-input-dark' : '';
+  const resolvedBrandColor = activeColor || darkModeColors?.light || '#2563eb';
 
   useEffect(() => {
-    if (design === 'neumorphic' && containerRef.current) {
-      const parentBg = getNearestParentBackground(containerRef.current.parentElement);
+    if ((design === 'neumorphic' || design === 'skeuomorphic') && containerRef.current) {
+      const parentBg = backgroundColor || getNearestParentBackground(containerRef.current.parentElement) || '#e0e5ec';
+      const shadowDark = adjustColor(parentBg, -20 * neuIntensity);
+      const shadowLight = adjustColor(parentBg, 20 * neuIntensity);
+
       setNeuVars({
-        '--neu-bg': parentBg,
-        '--neu-shadow-dark': adjustColor(parentBg, -15), 
-        '--neu-shadow-light': adjustColor(parentBg, 15),
+        '--mito-input-bg-env': parentBg,
+        '--mito-input-shadow-dark': shadowDark,
+        '--mito-input-shadow-light': shadowLight,
       } as React.CSSProperties);
     }
-  }, [design, elevation]);
+  }, [design, backgroundColor, neuIntensity]);
 
-  const handleValueChange = (val: string) => {
-    if (isFormik) activeContext.setFieldValue(alias, val);
+  const handleValueChange = (opt: InputOption) => {
+    if (readOnly) return;
+    const val = String(opt.optionvalue);
+    
+    if (isFormik) {
+      activeContext.setFieldValue(alias, val);
+      setTimeout(() => activeContext.setFieldTouched(alias, true, false), 0);
+    }
     if (onChange) onChange(val);
-    setTimeout(() => isFormik && activeContext.setFieldTouched(alias, true, false), 0);
+    if (onOptionChange) onOptionChange(opt, true);
   };
+
+  const customStyles = {
+    ...style,
+    ...neuVars,
+    '--mito-input-bg': backgroundColor,
+    '--mito-input-bg-dark': darkBackgroundColor || backgroundColor,
+    '--mito-input-text': textColor,
+    '--mito-input-text-dark': darkTextColor || textColor,
+    '--mito-input-error': errorTextColor || '#ef4444',
+    '--mito-input-error-dark': darkErrorTextColor || errorTextColor || '#f87171',
+    '--mito-input-active': resolvedBrandColor,
+    '--mito-input-font': fontFamily,
+  } as React.CSSProperties & Record<string, any>;
+
+  Object.keys(customStyles).forEach(key => customStyles[key] === undefined && delete customStyles[key]);
+
+  const gridTemplateColumns = columns || (direction === 'row' ? 'repeat(auto-fit, minmax(140px, 1fr))' : '1fr');
+  const Component = asChild ? Slot : "div";
 
   return (
     <Column span={width} newLine={newRow}>
-      <div 
+      <Component 
         ref={containerRef}
-        className={`v-input-wrapper ${className}`}
-        style={{ ...style, ...neuVars, ...(darkModeColors?.light ? { '--ui-brand-color': darkModeColors.light } : {}) } as React.CSSProperties}
+        className={`mito-input-wrapper ${themeClass} ${className}`}
+        style={customStyles}
+        onFocus={() => setIsFocused(true)}
+        onBlur={() => setIsFocused(false)}
+        {...props}
       >
-        <style dangerouslySetInnerHTML={{ __html: sharedInputStyles }} />
-        
-        <style dangerouslySetInnerHTML={{__html: `
-          .radio-${alias}-outline { 
-            background-color: transparent; border: 2px solid var(--gray-8); 
-            width: 20px; height: 20px; transition: all 0.2s ease; margin-right: 8px;
+        <style dangerouslySetInnerHTML={{ __html: sharedInputStyles || '' }} />
+        <style dangerouslySetInnerHTML={{ __html: `
+          .mito-input-wrapper {
+            --scoped-bg: var(--mito-input-bg, #ffffff);
+            --scoped-text: var(--mito-input-text, #111827);
+            --scoped-placeholder: #9ca3af;
+            --scoped-border: #d1d5db;
+            --scoped-active: var(--mito-input-active, #2563eb);
+            --scoped-error: var(--mito-input-error, #ef4444);
+            --scoped-font: var(--mito-input-font, system-ui, -apple-system, sans-serif);
+            
+            display: flex;
+            flex-direction: column;
+            width: 100%;
+            font-family: var(--scoped-font);
+            position: relative;
+            opacity: ${readOnly ? 0.7 : 1};
           }
-          .radio-${alias}-outline[data-state='checked'] { border-color: var(--ui-brand-color, var(--blue-9)); }
           
-          .radio-${alias}-material { 
-            background-color: var(--gray-4); border: none; 
-            width: 20px; height: 20px; transition: all 0.2s ease; margin-right: 8px;
-          }
-          .radio-${alias}-material[data-state='checked'] { background-color: var(--ui-brand-color, var(--blue-9)); }
-          
-          .radio-${alias}-neumorphic { 
-            background-color: var(--neu-bg); border: none;
-            box-shadow: ${elevation}px ${elevation}px ${elevation*2}px var(--neu-shadow-dark), -${elevation}px -${elevation}px ${elevation*2}px var(--neu-shadow-light);
-            width: 22px; height: 22px; transition: all 0.2s ease; margin-right: 8px;
-          }
-          .radio-${alias}-neumorphic[data-state='checked'] {
-            box-shadow: inset 2px 2px 4px var(--neu-shadow-dark), inset -2px -2px 4px var(--neu-shadow-light);
+          .mito-input-wrapper.mito-input-dark {
+            --scoped-bg: var(--mito-input-bg-dark, #1f2937);
+            --scoped-text: var(--mito-input-text-dark, #f9fafb);
+            --scoped-placeholder: #6b7280;
+            --scoped-border: #4b5563;
+            --scoped-error: var(--mito-input-error-dark, #f87171);
           }
 
-          /* Universal Indicator Color */
-          .radio-${alias}-outline .rt-RadioGroupIndicator, .radio-${alias}-neumorphic .rt-RadioGroupIndicator {
-             background-color: var(--ui-brand-color, var(--blue-9)); width: 10px; height: 10px; border-radius: 50%;
+          .mito-input-label-static {
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: var(--scoped-text);
+            margin-bottom: 0.75rem;
+            display: flex;
+            align-items: center;
+            gap: 0.35rem;
           }
-          .radio-${alias}-material .rt-RadioGroupIndicator {
-             background-color: white; width: 8px; height: 8px; border-radius: 50%;
+
+          .mito-radio-grid {
+            display: grid;
+            gap: 12px;
+            width: 100%;
+            position: relative;
+            padding: ${floatingLabel ? '16px 12px 12px 12px' : '0'};
+            border-radius: 8px;
+            border: ${floatingLabel ? '1px solid var(--scoped-border)' : 'none'};
+            transition: all 0.3s ease;
           }
+          .mito-radio-grid[data-error="true"] { border-color: var(--scoped-error); }
+          .mito-radio-grid:focus-within { border-color: ${floatingLabel ? 'var(--scoped-active)' : 'transparent'}; }
+
+          .mito-radio-floating-label {
+            position: absolute;
+            left: 10px;
+            top: -10px;
+            font-size: 0.75rem;
+            color: var(--scoped-placeholder);
+            background-color: var(--scoped-bg);
+            padding: 0 4px;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            transition: color 0.3s ease;
+            pointer-events: none;
+          }
+          .mito-radio-grid:focus-within .mito-radio-floating-label { color: var(--scoped-active); }
+          .mito-radio-grid[data-error="true"] .mito-radio-floating-label { color: var(--scoped-error); }
+
+          .mito-radio-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            cursor: ${readOnly ? 'default' : 'pointer'};
+            font-size: 0.875rem;
+            color: var(--scoped-text);
+            user-select: none;
+            position: relative;
+          }
+
+          /* Native Radio Visually Hidden */
+          .mito-radio-native {
+            position: absolute;
+            opacity: 0;
+            width: 0;
+            height: 0;
+            margin: 0;
+          }
+
+          /* Base Visual Box */
+          .mito-radio-box {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            transition: all 0.2s ease;
+            box-sizing: border-box;
+            border-radius: 50%;
+            position: relative;
+          }
+          .mito-radio-native:focus-visible + .mito-radio-box { outline: 2px solid var(--scoped-active); outline-offset: 2px; }
+          .mito-radio-native:disabled + .mito-radio-box { cursor: default; filter: grayscale(1); opacity: 0.6; }
+          
+          /* The Inner Dot */
+          .mito-radio-box::after {
+            content: "";
+            position: absolute;
+            border-radius: 50%;
+            transform: scale(0);
+            transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+          }
+          .mito-radio-native:checked + .mito-radio-box::after { transform: scale(1); }
+
+          /* Outline Design */
+          .mito-radio-box-outline {
+            width: 20px; height: 20px;
+            border: 2px solid var(--scoped-border);
+            background-color: var(--scoped-bg);
+          }
+          .mito-radio-box-outline::after { width: 10px; height: 10px; background-color: var(--scoped-active); }
+          .mito-radio-native:checked + .mito-radio-box-outline { border-color: var(--scoped-active); }
+
+          /* Material Design */
+          .mito-radio-box-material {
+            width: 20px; height: 20px;
+            border: none;
+            background-color: var(--scoped-border);
+          }
+          .mito-radio-box-material::after { width: 8px; height: 8px; background-color: var(--scoped-bg); }
+          .mito-radio-native:checked + .mito-radio-box-material { background-color: var(--scoped-active); }
+
+          /* Neumorphic Design */
+          .mito-radio-box-neumorphic {
+            width: 24px; height: 24px;
+            background-color: var(--mito-input-bg-env);
+            box-shadow: 3px 3px 6px var(--mito-input-shadow-dark), -3px -3px 6px var(--mito-input-shadow-light);
+            border: 1px solid transparent;
+          }
+          .mito-radio-box-neumorphic::after { width: 12px; height: 12px; background-color: var(--scoped-active); }
+          .mito-radio-native:checked + .mito-radio-box-neumorphic {
+            box-shadow: inset 3px 3px 6px var(--mito-input-shadow-dark), inset -3px -3px 6px var(--mito-input-shadow-light);
+          }
+
+          /* Skeuomorphic Design */
+          .mito-radio-box-skeuomorphic {
+            width: 22px; height: 22px;
+            background-image: linear-gradient(to bottom, rgba(0,0,0,0.1) 0%, rgba(255,255,255,0.1) 100%);
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.2), 0 1px 0 rgba(255,255,255,0.8);
+            border: 1px solid rgba(0,0,0,0.3);
+            background-color: var(--mito-input-bg-env);
+          }
+          .mito-radio-box-skeuomorphic::after { 
+            width: 10px; height: 10px; 
+            background-color: var(--scoped-active);
+            box-shadow: 0 1px 3px rgba(0,0,0,0.4), inset 0 1px 2px rgba(255,255,255,0.5);
+          }
+          .mito-radio-native:checked + .mito-radio-box-skeuomorphic {
+            background-image: linear-gradient(to bottom, rgba(0,0,0,0.15) 0%, rgba(255,255,255,0) 100%);
+          }
+
+          /* Validation Text */
+          .mito-input-error-text {
+            font-size: 0.75rem;
+            color: var(--scoped-error);
+            margin-top: 8px;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            animation: mito-fade-in 0.3s ease;
+          }
+          @keyframes mito-fade-in { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: translateY(0); } }
         `}} />
-
-        {inputLabel && (
-          <label className="v-input-label" id={`${alias}-label`}>
+        
+        {inputLabel && !floatingLabel && (
+          <div className="mito-input-label-static" id={`${alias}-label`}>
+            {icon && iconPosition === 'left' && <span style={{ color: 'var(--scoped-placeholder)' }}>{icon}</span>}
             {inputLabel}
+            {icon && iconPosition === 'right' && <span style={{ color: 'var(--scoped-placeholder)' }}>{icon}</span>}
             {isHinted && (
-              <Tooltip content={hintText || "Information"} align="start">
-                <a href={hintUrl || "#"} target="_blank" rel="noopener noreferrer">
-                  <Icon name="questionmarkcircled" height="14" width="14" style={{ color: 'var(--gray-9)' }} />
-                </a>
-              </Tooltip>
+              <TooltipPrimitive.Provider delayDuration={300}>
+                <TooltipPrimitive.Root>
+                  <TooltipPrimitive.Trigger asChild>
+                    <a href={hintUrl || "#"} target="_blank" rel="noopener noreferrer" style={{ display: 'flex', alignItems: 'center', pointerEvents: 'auto', marginLeft: '4px' }}>
+                      <Icon name="questionmarkcircled" height="14" width="14" style={{ color: 'var(--scoped-placeholder)' }} />
+                    </a>
+                  </TooltipPrimitive.Trigger>
+                  <TooltipPrimitive.Portal>
+                    <TooltipPrimitive.Content 
+                      sideOffset={5} 
+                      style={{ 
+                        backgroundColor: darkMode ? '#374151' : '#111827', 
+                        color: '#f9fafb', 
+                        padding: '6px 10px', 
+                        borderRadius: '4px', 
+                        fontSize: '0.75rem',
+                        fontFamily: 'inherit',
+                        zIndex: 50
+                      }}
+                    >
+                      {hintText || "Information"}
+                      <TooltipPrimitive.Arrow style={{ fill: darkMode ? '#374151' : '#111827' }} />
+                    </TooltipPrimitive.Content>
+                  </TooltipPrimitive.Portal>
+                </TooltipPrimitive.Root>
+              </TooltipPrimitive.Provider>
             )}
-          </label>
+          </div>
         )}
 
-        <RadioGroup.Root 
-          ref={ref}
-          name={alias}
-          aria-labelledby={`${alias}-label`}
-          disabled={readOnly}
-          value={fieldValue !== undefined && fieldValue !== null ? String(fieldValue) : ""}
-          onValueChange={handleValueChange}
-          style={{ width: '100%' }}
-          {...props}
+        <div 
+          className="mito-radio-grid" 
+          style={{ gridTemplateColumns }}
+          role="radiogroup" 
+          aria-labelledby={inputLabel && !floatingLabel ? `${alias}-label` : undefined}
+          data-error={hasError}
         >
-          <Grid width="100%" columns={columns || (direction === 'row' ? 'repeat(auto-fit, minmax(100px, 1fr))' : '1')} gap="3">
-            {options.map((opt) => (
-              <Flex asChild key={opt.optionid} align="center" style={{ cursor: readOnly ? 'default' : 'pointer' }}>
-                <Text as="label" size="2">
-                  <RadioGroup.Item value={String(opt.optionvalue)} className={`radio-${alias}-${design}`} />
-                  <span style={{ userSelect: 'none' }}>{opt.text}</span>
-                </Text>
-              </Flex>
-            ))}
-          </Grid>
-        </RadioGroup.Root>
+          {inputLabel && floatingLabel && (
+            <div className="mito-radio-floating-label">
+              {icon && iconPosition === 'left' && icon}
+              {inputLabel}
+              {icon && iconPosition === 'right' && icon}
+            </div>
+          )}
+
+          {options.map((opt, idx) => {
+            const isChecked = currentVal === String(opt.optionvalue);
+            const itemId = `${alias}-opt-${opt.optionid || idx}-${internalId}`;
+            return (
+              <label key={opt.optionid || idx} htmlFor={itemId} className="mito-radio-item">
+                <input 
+                  type="radio"
+                  id={itemId}
+                  name={alias}
+                  value={String(opt.optionvalue)}
+                  checked={isChecked}
+                  disabled={readOnly}
+                  onChange={() => handleValueChange(opt)}
+                  className="mito-radio-native"
+                  aria-invalid={hasError}
+                />
+                <div className={`mito-radio-box mito-radio-box-${design}`} />
+                <span>{opt.text}</span>
+              </label>
+            );
+          })}
+        </div>
 
         {hasError && displayError && (
-          <span id={`${alias}-error`} className="v-input-error" role="alert">
+          <span id={`${alias}-error`} className="mito-input-error-text" role="alert">
+            <Icon name="error" width="12" height="12" aria-hidden="true" />
             {typeof displayError === 'string' ? displayError : "Selection required"}
           </span>
         )}
-      </div>
+      </Component>
     </Column>
   );
 });

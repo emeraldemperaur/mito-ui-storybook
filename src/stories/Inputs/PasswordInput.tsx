@@ -1,8 +1,7 @@
 "use client";
 
-import React, { useRef, useState, useEffect, type JSX, useId } from "react";
-import { useFormikContext, getIn, type FormikContextType } from "formik";
-import { IconButton } from '@radix-ui/themes';
+import React, { useRef, useState, useEffect, type JSX, useId, useContext } from "react";
+import { getIn, type FormikContextType, FormikContext } from "formik";
 import * as TooltipPrimitive from '@radix-ui/react-tooltip';
 import { EyeOpenIcon, EyeNoneIcon, LockClosedIcon } from '@radix-ui/react-icons';
 import { Icon } from "../../components/icons/Icons";
@@ -114,7 +113,7 @@ export interface PasswordInputProps extends Omit<React.InputHTMLAttributes<HTMLI
 /**
  * @component PasswordInput
  * @description Secure credential field. Includes a native semantic visibility toggle button mapped securely to accessibility trees,
- * maintaining absolute visual parity with standard `Input` variants (Neumorphic, Skeuomorphic, Outline, Material).
+ * maintaining absolute visual parity with standard `Input` variants (Neumorphic, Skeuomorphic, Outline, Material) without external theme provider dependencies.
  */
 export const PasswordInput = React.forwardRef<HTMLInputElement, PasswordInputProps>(({
   alias,
@@ -154,14 +153,14 @@ export const PasswordInput = React.forwardRef<HTMLInputElement, PasswordInputPro
   const internalId = useId();
   const inputId = `${alias}-input-${internalId}`;
 
-  const fallbackContext = useFormikContext<any>();
+  const fallbackContext = useContext(FormikContext) as FormikContextType<any> | undefined;
   const activeContext = formikContext || fallbackContext;
-  
+    
   // Hybrid State Engine: Use Formik if available, else fallback to standard controlled props
-  const isFormik = Boolean(activeContext);
-  const fieldValue = isFormik ? getIn(activeContext.values, alias) : value;
-  const fieldError = isFormik ? getIn(activeContext.errors, alias) : null;
-  const fieldTouched = isFormik ? getIn(activeContext.touched, alias) : null;
+  const isFormik = activeContext !== undefined && typeof activeContext.setFieldValue === 'function';
+  const fieldValue = isFormik ? getIn(activeContext!.values, alias) : value;
+  const fieldError = isFormik ? getIn(activeContext!.errors, alias) : null;
+  const fieldTouched = isFormik ? getIn(activeContext!.touched, alias) : null;
   
   const hasError = Boolean((fieldTouched && fieldError) || errorText);
   const displayError = errorText || fieldError;
@@ -272,10 +271,42 @@ export const PasswordInput = React.forwardRef<HTMLInputElement, PasswordInputPro
             z-index: 2;
             transition: color 0.3s ease;
           }
-          .mito-input-icon.left { left: 12px; }
-          .mito-input-icon.right { right: 12px; pointer-events: auto; }
+          .mito-input-icon.left { left: 12px; pointer-events: none; }
+          .mito-input-icon.right { right: 8px; pointer-events: auto; }
           .mito-input-base:focus-within .mito-input-icon { color: var(--scoped-active); }
           .mito-input-base[data-error="true"] .mito-input-icon { color: var(--scoped-error); }
+
+          /* Native Self-Contained Visibility Toggle Button */
+          .mito-password-toggle-btn {
+            appearance: none;
+            background: transparent;
+            border: none;
+            margin: 0;
+            padding: 4px;
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            color: inherit;
+            cursor: pointer;
+            transition: background-color 0.2s ease, color 0.2s ease, transform 0.1s ease;
+          }
+          .mito-password-toggle-btn:hover:not(:disabled) {
+            background-color: rgba(156, 163, 175, 0.16);
+          }
+          .mito-password-toggle-btn:active:not(:disabled) {
+            transform: scale(0.94);
+          }
+          .mito-password-toggle-btn:focus-visible {
+            outline: 2px solid var(--scoped-active);
+            outline-offset: 1px;
+          }
+          .mito-password-toggle-btn:disabled {
+            cursor: default;
+            opacity: 0.5;
+          }
 
           .mito-input-field {
             width: 100%;
@@ -350,7 +381,7 @@ export const PasswordInput = React.forwardRef<HTMLInputElement, PasswordInputPro
           }
           .mito-input-material[data-error="true"] { border-bottom-color: var(--scoped-error); border-image: none; }
           .mito-input-material .mito-input-icon.left { left: 4px; }
-          .mito-input-material .mito-input-icon.right { right: 4px; }
+          .mito-input-material .mito-input-icon.right { right: 2px; }
           
           /* Material Floating Label */
           .mito-input-material .mito-input-floating-label {
@@ -478,17 +509,16 @@ export const PasswordInput = React.forwardRef<HTMLInputElement, PasswordInputPro
             <TooltipPrimitive.Provider delayDuration={300}>
               <TooltipPrimitive.Root>
                 <TooltipPrimitive.Trigger asChild>
-                  <IconButton 
+                  <button
                     type="button"
-                    variant="ghost" 
-                    color="gray"
-                    size="1"
+                    className="mito-password-toggle-btn"
+                    disabled={props.disabled}
                     onClick={() => setShowPassword(!showPassword)}
                     aria-label={showPassword ? "Hide password" : "Show password"}
-                    style={{ margin: 0, padding: 0, color: 'inherit' }}
+                    aria-pressed={showPassword}
                   >
                     {showPassword ? <EyeOpenIcon width="18" height="18" /> : <EyeNoneIcon width="18" height="18" />}
-                  </IconButton>
+                  </button>
                 </TooltipPrimitive.Trigger>
                 <TooltipPrimitive.Portal>
                   <TooltipPrimitive.Content 

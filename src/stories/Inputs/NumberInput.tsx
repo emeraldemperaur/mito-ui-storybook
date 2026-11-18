@@ -1,7 +1,7 @@
 "use client";
 
-import React, { useRef, useState, useEffect, type JSX, useId } from "react";
-import { useFormikContext, getIn, type FormikContextType } from "formik";
+import React, { useRef, useState, useEffect, type JSX, useId, useContext } from "react";
+import { FormikContext, getIn, type FormikContextType } from "formik";
 import * as TooltipPrimitive from '@radix-ui/react-tooltip';
 import { IMaskInput } from 'react-imask';
 import { Icon } from "../../components/icons/Icons";
@@ -16,87 +16,119 @@ import { type InputDesign } from "./Input";
  */
 export interface NumberInputProps extends Omit<React.InputHTMLAttributes<HTMLInputElement>, 'size' | 'prefix' | 'onChange'> {
   /** 
-   * Unique identifier mapping the input to its Formik state and DOM label. 
+   * @description Unique identifier mapping the input to its Formik state and DOM label. 
    * @required
    */
   alias: string;
-
   /** 
-   * Number of decimal places to enforce and pad. 
+   * @description Number of decimal places to enforce and pad (e.g., 2 becomes 0.00). 
    * @default 2 
    */
   decimals?: number;
-
   /** 
-   * Permits negative numerical values. 
+   * @description Permits negative numerical values. 
    * @default false 
    */
   allowNegative?: boolean;
-
   /** 
-   * Text rendered above the input or floating over the border.
+   * @description Text rendered above the input or floating over the border.
    */
   inputLabel?: string;
-
   /** 
-   * Toggles the interactive floating label animation (primarily used with the 'outline' variant).
+   * @description Toggles the interactive floating label animation.
    * @default false
    */
   floatingLabel?: boolean;
-
   /**
-   * The core architectural design variant of the input field.
-   * - `material`: Minimalist underline with a vibrant gradient animation on focus.
-   * - `outline`: Crisp bordered aesthetic with optional floating labels.
-   * - `neumorphic`: Soft, extruded physical surface utilizing inset shadows.
-   * - `skeuomorphic`: High-fidelity 3D realistic mechanical input well.
+   * @description The core architectural design variant of the input field.
    * @default 'outline'
    */
   design?: InputDesign;
-
-  /** Optional icon node rendered inside the input field. */
-  icon?: React.ReactNode;
-
   /** 
-   * Determines if the icon is placed on the left (leading) or right (trailing).
+   * @description Optional icon node rendered inside the input field. 
+   */
+  icon?: React.ReactNode;
+  /** 
+   * @description Determines if the icon is placed on the left (leading) or right (trailing).
    * @default "left"
    */
   iconPosition?: 'left' | 'right';
-
-  /** Forces the component into dark mode, overriding system or parent theme contexts. */
+  /** 
+   * @description Forces the component into dark mode, overriding system or parent theme contexts. 
+   */
   darkMode?: boolean;
-
-  /* --- Dynamic Color Overrides --- */
+  /** 
+   * @description Dynamic base background color for light mode. Injected as `--mito-input-bg`.
+   */
   backgroundColor?: string;
+  /** 
+   * @description Dynamic base background color specifically for dark mode contexts.
+   */
   darkBackgroundColor?: string;
+  /** 
+   * @description Standard text and icon color for light mode. Injected as `--mito-input-text`.
+   */
   textColor?: string;
+  /** 
+   * @description Standard text and icon color specifically for dark mode contexts.
+   */
   darkTextColor?: string;
+  /** 
+   * @description Validation failure text color for light mode. Injected as `--mito-input-error`.
+   */
   errorTextColor?: string;
+  /** 
+   * @description Validation failure text color for dark mode. Injected as `--mito-input-error-dark`.
+   */
   darkErrorTextColor?: string;
+  /** 
+   * @description Highlight color applied to the active/focused border and icons. 
+   */
   activeColor?: string;
-
-  /** Font family override to match specific UI brand primitives. */
+  /** 
+   * @description Font family override to match specific UI brand primitives. 
+   */
   fontFamily?: string;
-
-  /** Toggles an active hint tooltip next to the label. */
+  /** 
+   * @description Toggles an active hint tooltip next to the label. 
+   */
   isHinted?: boolean;
+  /** 
+   * @description The informational text displayed inside the hint tooltip. 
+   */
   hintText?: string;
+  /** 
+   * @description Optional URL to open when the hint tooltip icon is clicked. 
+   */
   hintUrl?: string;
-
-  /** Explicit error message string. Overrides Formik validation errors if provided. */
+  /** 
+   * @description Explicit error message string. Overrides Formik validation errors if provided. 
+   */
   errorText?: string;
-
-  /** Viewport column width configuration value (1 to 12). @default 12 */
+  /** 
+   * @description Viewport column width configuration value (1 to 12). 
+   * @default 12 
+   */
   width?: number;
-  /** Forces container layouts to break downward onto a fresh structural row line. */
+  /** 
+   * @description Forces container layouts to break downward onto a fresh structural row line. 
+   */
   newRow?: boolean;
-  /** Specific custom style class selector appended to the root container. */
+  /** 
+   * @description Specific custom style class selector appended to the root container. 
+   */
   className?: string;
-  /** Inline modification style rules object. */
+  /** 
+   * @description Inline modification style rules object. 
+   */
   style?: React.CSSProperties;
-  /** Explicit Formik context object injected for nested step fields. */
+  /** 
+   * @description Explicit Formik context object injected for nested step fields. 
+   */
   formikContext?: FormikContextType<any>;
-  /** Unmasked string value callback for external state management. */
+  /** 
+   * @description Unmasked string value callback for external state management. 
+   */
   onChange?: (value: string) => void;
 }
 
@@ -146,14 +178,14 @@ export const NumberInput = React.forwardRef<HTMLInputElement, NumberInputProps>(
   const internalId = useId();
   const inputId = `${alias}-input-${internalId}`;
 
-  const fallbackContext = useFormikContext<any>();
+  const fallbackContext = useContext(FormikContext) as FormikContextType<any> | undefined;
   const activeContext = formikContext || fallbackContext;
-  
+    
   // Hybrid State Engine: Use Formik if available, else fallback to standard controlled props
-  const isFormik = Boolean(activeContext);
-  const fieldValue = isFormik ? getIn(activeContext.values, alias) : value;
-  const fieldError = isFormik ? getIn(activeContext.errors, alias) : null;
-  const fieldTouched = isFormik ? getIn(activeContext.touched, alias) : null;
+  const isFormik = activeContext !== undefined && typeof activeContext.setFieldValue === 'function';
+  const fieldValue = isFormik ? getIn(activeContext!.values, alias) : value;
+  const fieldError = isFormik ? getIn(activeContext!.errors, alias) : null;
+  const fieldTouched = isFormik ? getIn(activeContext!.touched, alias) : null;
   
   const hasError = Boolean((fieldTouched && fieldError) || errorText);
   const displayError = errorText || fieldError;
@@ -466,7 +498,7 @@ export const NumberInput = React.forwardRef<HTMLInputElement, NumberInputProps>(
             aria-invalid={hasError}
             aria-describedby={hasError ? `${alias}-error` : undefined}
             className={`mito-input-field ${icon ? `has-icon-${iconPosition}` : ''}`}
-            style={{ textAlign: 'right' }} 
+            style={{ textAlign: 'right' }} // Align numerical inputs right per enterprise standard
             {...props}
           />
         </div>

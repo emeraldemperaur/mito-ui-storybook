@@ -628,7 +628,7 @@ export const StandaloneCountrySelectExample = () => {
  * Demonstrates the seamless binding of `CountrySelectInput` inside a `Formik` context. 
  * Formik captures the ISO Alpha-2 string directly into the global validation state.
  */
-export const FormikIntegration: Story = {
+export const InteractiveFormTest: Story = {
   render: (args) => {
     return (
       <Formik

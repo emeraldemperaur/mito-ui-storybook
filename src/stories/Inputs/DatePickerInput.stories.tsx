@@ -613,7 +613,7 @@ export const StandaloneDatePickerExample = () => {
  * Demonstrates the seamless binding of `DatePickerInput` inside a `Formik` context with Yup integration. 
  * Formik captures the JavaScript `Date` object directly into the global validation state.
  */
-export const FormikIntegration: Story = {
+export const InteractiveFormTest: Story = {
   render: (args) => {
     return (
       <Formik

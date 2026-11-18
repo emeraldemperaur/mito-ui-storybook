@@ -1,7 +1,7 @@
 "use client";
 
-import React, { useRef, useState, useEffect, type JSX, useId } from "react";
-import { useFormikContext, getIn, type FormikContextType } from "formik";
+import React, { useRef, useState, useEffect, type JSX, useId, useContext } from "react";
+import { getIn, type FormikContextType, FormikContext } from "formik";
 import * as TooltipPrimitive from '@radix-ui/react-tooltip';
 import { IMaskInput } from 'react-imask';
 import cardValidator from "card-validator";
@@ -15,12 +15,7 @@ import { FaCreditCard } from '@react-icons/all-files/fa/FaCreditCard';
 import { Icon } from "../../components/icons/Icons";
 import { Column } from "../Layout/Column"; 
 import { adjustColor, getNearestParentBackground } from "../../utils/Vinci";
-
-/** 
- * @type InputDesign 
- * @description Strong string literal union representing permitted enterprise design motifs. 
- */
-export type InputDesign = 'material' | 'outline' | 'neumorphic' | 'skeuomorphic';
+import type { InputDesign } from "./Input";
 
 /**
  * @interface CreditCardInputProps
@@ -184,14 +179,14 @@ export const CreditCardInput = React.forwardRef<HTMLInputElement, CreditCardInpu
   const internalId = useId();
   const inputId = `${alias}-input-${internalId}`;
 
-  const fallbackContext = useFormikContext<any>();
+  const fallbackContext = useContext(FormikContext) as FormikContextType<any> | undefined;
   const activeContext = formikContext || fallbackContext;
-  
+    
   // Hybrid State Engine: Use Formik if available, else fallback to standard controlled props
-  const isFormik = Boolean(activeContext);
-  const fieldValue = isFormik ? getIn(activeContext.values, alias) : value;
-  const fieldError = isFormik ? getIn(activeContext.errors, alias) : null;
-  const fieldTouched = isFormik ? getIn(activeContext.touched, alias) : null;
+  const isFormik = activeContext !== undefined && typeof activeContext.setFieldValue === 'function';
+  const fieldValue = isFormik ? getIn(activeContext!.values, alias) : value;
+  const fieldError = isFormik ? getIn(activeContext!.errors, alias) : null;
+  const fieldTouched = isFormik ? getIn(activeContext!.touched, alias) : null;
   
   const hasError = Boolean((fieldTouched && fieldError) || errorText);
   const displayError = errorText || fieldError;

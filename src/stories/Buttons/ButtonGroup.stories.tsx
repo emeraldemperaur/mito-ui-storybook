@@ -202,6 +202,7 @@ const meta: Meta<ButtonGroupStoryArgs> = {
     },
   },
   args: {
+    alias: 'demo-group', // Ensures required BaseInputProps constraint is met
     design: 'outline',
     orientation: 'horizontal',
     multiselect: false,
@@ -277,7 +278,7 @@ export const Neumorphic: Story = {
     darkBackgroundColor: '#1A1A1D',
     darkTextColor: '#90feb5',
   },
-  render: (args) => (
+  render: ({ itemDisabled, itemValue, itemAsChild, onItemClick, onItemHover, onItemLongClick, ...args }) => (
     <div style={{ 
       padding: '4rem', 
       display: 'flex', 
@@ -394,7 +395,7 @@ export const DarkModeOverride: Story = {
  * the 3D mechanical depression mechanics and dynamic inset shadow morphing.
  */
 export const TactileFeedback: Story = {
-  render: (args) => (
+  render: ({ itemDisabled, itemValue, itemAsChild, onItemClick, onItemHover, onItemLongClick, ...args }) => (
     <div style={{ 
       padding: '3rem', 
       display: 'flex', 
@@ -467,7 +468,7 @@ export const TactileFeedback: Story = {
  * Test the submission hook to see the payload.
  */
 export const InteractiveFormTest: Story = {
-  render: (args) => {
+  render: ({ itemDisabled, itemValue, itemAsChild, onItemClick, onItemHover, onItemLongClick, ...args }) => {
     const handleMockSubmit = (values: any) => {
       alert(`Form Submitted! \n\nPayload: ${JSON.stringify(values, null, 2)}`);
       console.log('Mock Form Submitted:', values);
