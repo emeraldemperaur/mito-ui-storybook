@@ -2,7 +2,6 @@
 
 import React, { type ReactNode, useEffect, useRef, useState, createContext, useContext, type JSX, useMemo } from 'react';
 import * as RadixAccordion from '@radix-ui/react-accordion';
-import { Flex, Text } from '@radix-ui/themes';
 import { Column } from "../Layout/Column"; 
 import { Icon } from "../../components/icons/Icons";
 import { adjustColor, getNearestParentBackground } from "../../utils/Vinci";
@@ -519,42 +518,38 @@ const AccordionItem = React.forwardRef<HTMLDivElement, AccordionItemProps>(({
     >
       <RadixAccordion.Header style={{ margin: 0 }}>
         <RadixAccordion.Trigger className="v-acc-trigger">
-          <Flex align="center" gap="3">
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
             {icon && (
               <div className="v-acc-icon-container" style={{ display: 'flex', alignItems: 'center', color: 'inherit', paddingRight: '16px' }}>
                 {icon}
               </div>
             )}
-            <Flex direction="column" gap="1">
-              <Text 
-                size="3" 
-                weight="bold" 
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', textAlign: 'left' }}>
+              <span 
                 className="v-acc-title-text"
-                style={{ color: 'var(--scoped-text)', transition: 'color 0.3s ease', fontSize: 'var(--acc-size)' }}
+                style={{ color: 'var(--scoped-text)', transition: 'color 0.3s ease', fontSize: 'var(--acc-size, 16px)', fontWeight: 'bold' }}
               >
                 {title}
-              </Text>
+              </span>
               {subtitle && (
-                <Text 
-                  size="2" 
-                  weight="light" 
+                <span 
                   className="v-acc-subtitle-text"
-                  style={{ color: 'var(--scoped-text)', opacity: 0.7 }}
+                  style={{ color: 'var(--scoped-text)', opacity: 0.7, fontSize: '14px', fontWeight: 300 }}
                 >
                   {subtitle}
-                </Text>
+                </span>
               )}
-            </Flex>
-          </Flex>
+            </div>
+          </div>
           <Icon name="caretdown" height="20" width="20" className="v-acc-chevron" />
         </RadixAccordion.Trigger>
       </RadixAccordion.Header>
 
       <RadixAccordion.Content className="v-acc-content" style={{ overflow: 'hidden' }}>
         <div style={{ padding: '0 24px 24px 24px' }}>
-          <Text size="2" style={{ color: 'var(--scoped-text)', opacity: 0.85 }} as="div">
+          <div style={{ color: 'var(--scoped-text)', opacity: 0.85, fontSize: '14px' }}>
             {children}
-          </Text>
+          </div>
         </div>
       </RadixAccordion.Content>
     </RadixAccordion.Item>

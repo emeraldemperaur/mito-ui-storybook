@@ -1,7 +1,6 @@
 "use client";
 
 import React, { type ReactNode, useEffect, useRef, useState, createContext, useContext, type JSX, useMemo } from 'react';
-import { Flex, Text, Box } from '@radix-ui/themes';
 import { Slot } from '@radix-ui/react-slot';
 import { FormikProvider, type FormikContextType, useFormikContext } from 'formik';
 import { Column } from "../Layout/Column"; 
@@ -38,7 +37,6 @@ interface CodexContextProps {
   activeColor?: string;
 }
 
-// Enforces strict architectural boundaries to catch rendering errors immediately
 const CodexContext = createContext<CodexContextProps | null>(null);
 
 /**
@@ -474,7 +472,7 @@ const CodexRoot = ({
           `}} />
 
           <nav aria-label="Progress">
-            <Box className={`mito-stepper-${design}`} style={{ paddingBottom: '64px', paddingTop: '10px' }}>
+            <div className={`mito-stepper-${design}`} style={{ paddingBottom: '64px', paddingTop: '10px' }}>
               <ol style={{ display: 'flex', width: '100%', margin: 0, padding: 0, listStyle: 'none', alignItems: 'center' }}>
                 {steps.map((step, index) => {
                   const isCompleted = index < activeIndex;
@@ -494,7 +492,7 @@ const CodexRoot = ({
 
                   return (
                     <li key={step.id} style={{ display: 'flex', flex: isLast ? '0' : '1', alignItems: 'center' }} aria-current={isActive ? 'step' : undefined}>
-                      <Box style={{ position: 'relative', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                      <div style={{ position: 'relative', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
                         <button 
                           type="button"
                           disabled={!isClickable}
@@ -505,10 +503,8 @@ const CodexRoot = ({
                           {isCompleted ? <Icon name="check" width="20" height="20" aria-hidden="true" /> : (step.icon ? step.icon : <span>{index + 1}</span>)}
                         </button>
 
-                        <Box style={{ position: 'absolute', top: '100%', marginTop: '12px', width: '148px', left: isFirst ? '0' : isLast ? 'auto' : '50%', right: isLast ? '0' : 'auto', transform: (!isFirst && !isLast) ? 'translateX(-50%)' : 'none', textAlign: isFirst ? 'left' : isLast ? 'right' : 'center' }}>
-                          <Text
-                            size="2"
-                            weight={isActive ? "bold" : "medium"}
+                        <div style={{ position: 'absolute', top: '100%', marginTop: '12px', width: '148px', left: isFirst ? '0' : isLast ? 'auto' : '50%', right: isLast ? '0' : 'auto', transform: (!isFirst && !isLast) ? 'translateX(-50%)' : 'none', textAlign: isFirst ? 'left' : isLast ? 'right' : 'center' }}>
+                          <span
                             className="mito-step-title"
                             style={{
                               fontFamily: 'var(--scoped-font, "Mozilla Headline", "Montserrat", sans-serif)',
@@ -518,11 +514,9 @@ const CodexRoot = ({
                             }}
                           >
                             {step.title}
-                          </Text>
+                          </span>
                           {step.description && (
-                            <Text
-                              size="1"
-                              weight="light"
+                            <span
                               className="mito-step-subtitle"
                               style={{
                                 fontFamily: 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace',
@@ -532,10 +526,10 @@ const CodexRoot = ({
                               }}
                             >
                               {step.description}
-                            </Text>
+                            </span>
                           )}
-                        </Box>
-                      </Box>
+                        </div>
+                      </div>
 
                       {!isLast && (
                         <div className={`mito-step-line ${isCompleted ? 'completed' : 'pending'}`} aria-hidden="true" />
@@ -544,12 +538,12 @@ const CodexRoot = ({
                   );
                 })}
               </ol>
-            </Box>
+            </div>
           </nav>
 
-          <Box style={{ position: 'relative', marginTop: '32px', marginBottom: '32px' }}>
+          <div style={{ position: 'relative', marginTop: '32px', marginBottom: '32px' }}>
             {content}
-          </Box>
+          </div>
         </Wrapper>
       </Column>
     </CodexContext.Provider>
@@ -670,12 +664,13 @@ const CodexControls = ({
   const isTerminal = !resolvedNextId;
 
   return (
-    <Flex
-      gap="3"
-      mt="6"
-      justify="between"
-      align="center"
+    <div
       style={{
+        display: 'flex',
+        gap: '12px',
+        marginTop: '24px',
+        justifyContent: 'space-between',
+        alignItems: 'center',
         borderTop: `1px solid ${resolvedDarkMode ? 'rgba(255, 255, 255, 0.12)' : 'rgba(0, 0, 0, 0.08)'}`,
         paddingTop: '24px',
         width: '100%'
@@ -725,7 +720,7 @@ const CodexControls = ({
           <>{finishIcon && <><Icon name={finishIcon} aria-hidden="true" />&nbsp;</>}{finishLabel}</>
         )}
       </Button>
-    </Flex>
+    </div>
   );
 };
 CodexControls.displayName = "Codex.Controls";

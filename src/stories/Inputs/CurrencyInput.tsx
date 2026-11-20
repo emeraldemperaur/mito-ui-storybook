@@ -570,6 +570,7 @@ export const CurrencyInput = React.forwardRef<HTMLInputElement, CurrencyInputPro
             >
               <SelectPrimitive.Trigger 
                 className="mito-select-trigger"
+                aria-label={`Select currency for ${inputLabel || alias}`}
                 style={{ 
                   height: '100%', 
                   padding: '0 4px 0 10px', 
@@ -660,6 +661,7 @@ export const CurrencyInput = React.forwardRef<HTMLInputElement, CurrencyInputPro
             inputRef={ref}
             id={inputId}
             name={alias}
+            aria-label={inputLabel ? undefined : (placeholder || alias)}
             {...({
               mask: Number,
               scale: activeCurrency.scale,

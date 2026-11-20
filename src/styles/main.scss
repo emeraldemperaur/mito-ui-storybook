@@ -1,19 +1,25 @@
 @layer radix, custom;
 
+/* 
+ * Baseline Radix styles. Kept for headless primitive resets (e.g. Radix Accordion, Tooltips).
+ * The core UI components (Inputs, Rows, Columns, ButtonGroups) self-contained. 
+ */
 @import "@radix-ui/themes/styles.css" layer(radix);
+@import url('https://fonts.googleapis.com/css2?family=Raleway:ital,wght@0,100..900;1,100..900&display=swap');
 
 @layer custom {  
   $text-main: #333333;
-  $neumorphic-bg: #e0e5ec;
-  $neumorphic-shadow-dark: #b8b9be;
-  $neumorphic-shadow-light: #ffffff;
   $font-primary: 'Montserrat', sans-serif;
 
   :root {
     --text-main-color: #{$text-main}; 
-    --mito-neumorphic-bg: #{$neumorphic-bg};
   }
 
+  /* 
+   * LEGACY INFORMATION CLASSES
+   * Kept safely intact in case SectionTitle.tsx or other text elements still rely on them.
+   * NOTE: None of the Mito UI form inputs use these anymore.
+   */
   .core-input-label {
     text-align: start;
   }
@@ -41,29 +47,5 @@
     padding-top: 3px;
     padding-bottom: 3px;
     text-align: left;
-  }
-
-  .input-material {
-    background-color: transparent !important;
-    box-shadow: none !important;
-    border-radius: 0 !important;
-    border-bottom: 2px solid var(--gray-6) !important;
-    
-    &:focus-within {
-      border-bottom-color: var(--accent-9) !important;
-    }
-  }
-
-  .input-neumorphic {
-    border: none !important;
-    border-radius: 12px !important;
-    background: $neumorphic-bg !important; 
-    box-shadow: 5px 5px 10px $neumorphic-shadow-dark, -5px -5px 10px $neumorphic-shadow-light !important;
-
-    &:focus-within {
-      box-shadow: 
-        inset 5px 5px 10px $neumorphic-shadow-dark, 
-        inset -5px -5px 10px $neumorphic-shadow-light !important;
-    }
   }
 }

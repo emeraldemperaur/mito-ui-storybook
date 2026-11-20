@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useRef, useState, useEffect, type JSX, useContext } from "react";
+import React, { useRef, useState, useEffect, type JSX, useContext, useId } from "react";
 import { getIn, type FormikContextType, FormikContext } from "formik";
 import { Slot } from '@radix-ui/react-slot';
 import * as TooltipPrimitive from '@radix-ui/react-tooltip';
@@ -206,6 +206,8 @@ export const SliderInput = React.forwardRef<HTMLSpanElement, SliderInputProps>((
 }, ref): JSX.Element => {
   const containerRef = useRef<HTMLDivElement>(null);
   const [neuVars, setNeuVars] = useState<React.CSSProperties & Record<string, any>>({});
+  const internalId = useId();
+  const inputId = `${alias}-input-${internalId}`;
 
   const fallbackContext = useContext(FormikContext) as FormikContextType<any> | undefined;
   const activeContext = formikContext || fallbackContext;
@@ -450,7 +452,7 @@ export const SliderInput = React.forwardRef<HTMLSpanElement, SliderInputProps>((
         
         <div className="mito-slider-header" data-error={hasError}>
           {inputLabel && (
-            <label className="mito-input-label-static" id={`${alias}-label`}>
+            <div className="mito-input-label-static" id={`${alias}-label`}>
               {inputLabel}
               {isHinted && (
                 <TooltipPrimitive.Provider delayDuration={300}>
@@ -480,7 +482,7 @@ export const SliderInput = React.forwardRef<HTMLSpanElement, SliderInputProps>((
                   </TooltipPrimitive.Root>
                 </TooltipPrimitive.Provider>
               )}
-            </label>
+            </div>
           )}
           <span className="mito-slider-value">
             {isRange ? sliderValue.join(' - ') : sliderValue[0]}
@@ -490,9 +492,11 @@ export const SliderInput = React.forwardRef<HTMLSpanElement, SliderInputProps>((
         <Component>
           <SliderPrimitive.Root 
             ref={ref as any}
+            id={inputId} 
             name={alias}
             disabled={readOnly}
             aria-labelledby={inputLabel ? `${alias}-label` : undefined}
+            aria-label={!inputLabel ? alias : undefined} 
             min={minvalue} 
             max={maxvalue} 
             step={stepvalue}
@@ -511,8 +515,16 @@ export const SliderInput = React.forwardRef<HTMLSpanElement, SliderInputProps>((
               <SliderPrimitive.Range className="mito-slider-range" />
             </SliderPrimitive.Track>
             
-            <SliderPrimitive.Thumb className="mito-slider-thumb" aria-label="Volume" />
-            {isRange && <SliderPrimitive.Thumb className="mito-slider-thumb" aria-label="Volume" />}
+            <SliderPrimitive.Thumb 
+              className="mito-slider-thumb" 
+              aria-label={isRange ? "Minimum value" : (inputLabel || alias)} 
+            />
+            {isRange && (
+              <SliderPrimitive.Thumb 
+                className="mito-slider-thumb" 
+                aria-label="Maximum value" 
+              />
+            )}
           </SliderPrimitive.Root>
         </Component>
 

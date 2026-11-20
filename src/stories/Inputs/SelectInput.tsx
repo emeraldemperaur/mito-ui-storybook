@@ -165,8 +165,8 @@ export interface SelectInputProps extends Omit<React.HTMLAttributes<HTMLButtonEl
 }
 
 /**
- * @component SelectInput
- * @description Unified SSR-safe dropdown. Routes between single-select native/styled dropdowns and multi-select Popovers, supporting Neumorphic ambient-background matching and global dark mode token overrides.
+- @component SelectInput
+- @description Unified SSR-safe dropdown. Routes between single-select native/styled dropdowns and multi-select Popovers, supporting Neumorphic ambient-background matching and global dark mode token overrides.
  */
 export const SelectInput = React.forwardRef<HTMLButtonElement, SelectInputProps>(({
   alias,
@@ -305,13 +305,13 @@ export const SelectInput = React.forwardRef<HTMLButtonElement, SelectInputProps>
     <Column span={width} newLine={newRow}>
       <div 
         ref={containerRef}
-        className={`mito-input-wrapper ${themeClass} ${className}`}
+        className={`mito-input-wrapper mito-select-wrapper ${themeClass} ${className}`}
         style={customStyles}
       >
         <style dangerouslySetInnerHTML={{ __html: sharedInputStyles || '' }} />
         
         <style dangerouslySetInnerHTML={{ __html: `
-          .mito-input-wrapper {
+          .mito-select-wrapper.mito-input-wrapper {
             --scoped-bg: var(--mito-input-bg, #ffffff);
             --scoped-text: var(--mito-input-text, #111827);
             --scoped-placeholder: #9ca3af;
@@ -327,7 +327,7 @@ export const SelectInput = React.forwardRef<HTMLButtonElement, SelectInputProps>
             position: relative;
           }
           
-          .mito-input-wrapper.mito-input-dark {
+          .mito-select-wrapper.mito-input-wrapper.mito-input-dark {
             --scoped-bg: var(--mito-input-bg-dark, #1f2937);
             --scoped-text: var(--mito-input-text-dark, #f9fafb);
             --scoped-placeholder: #6b7280;
@@ -335,7 +335,7 @@ export const SelectInput = React.forwardRef<HTMLButtonElement, SelectInputProps>
             --scoped-error: var(--mito-input-error-dark, #f87171);
           }
 
-          .mito-input-label-static {
+          .mito-select-wrapper .mito-input-label-static {
             font-size: 0.875rem;
             font-weight: 600;
             color: var(--scoped-text);
@@ -345,7 +345,7 @@ export const SelectInput = React.forwardRef<HTMLButtonElement, SelectInputProps>
             gap: 0.35rem;
           }
 
-          .mito-input-base {
+          .mito-select-wrapper .mito-input-base {
             position: relative;
             display: flex;
             align-items: center;
@@ -362,10 +362,10 @@ export const SelectInput = React.forwardRef<HTMLButtonElement, SelectInputProps>
             border: none;
             outline: none;
           }
-          .mito-input-base:disabled { cursor: default; opacity: 0.7; }
-          .mito-input-base[data-placeholder="true"] { color: var(--scoped-placeholder); }
+          .mito-select-wrapper .mito-input-base:disabled { cursor: default; opacity: 0.7; }
+          .mito-select-wrapper .mito-input-base[data-placeholder="true"] { color: var(--scoped-placeholder); }
 
-          .mito-input-icon {
+          .mito-select-wrapper .mito-input-icon {
             display: flex;
             align-items: center;
             justify-content: center;
@@ -376,27 +376,28 @@ export const SelectInput = React.forwardRef<HTMLButtonElement, SelectInputProps>
             top: 50%;
             transform: translateY(-50%);
           }
-          .mito-input-icon.left { left: 12px; }
-          .mito-input-icon.right { right: 12px; }
-          .mito-input-base[data-state="open"] .mito-input-icon { color: var(--scoped-active); }
-          .mito-input-base[data-error="true"] .mito-input-icon { color: var(--scoped-error); }
+          .mito-select-wrapper .mito-input-icon.left { left: 12px; }
+          .mito-select-wrapper .mito-input-icon.right { right: 12px; }
+          .mito-select-wrapper .mito-input-base[data-state="open"] .mito-input-icon { color: var(--scoped-active); }
+          .mito-select-wrapper .mito-input-base[data-error="true"] .mito-input-icon { color: var(--scoped-error); }
 
-          /* --- Padding Adjustments for Icons --- */
-          .mito-input-base.has-icon-left { padding-left: 38px !important; }
-          .mito-input-base.has-icon-right { padding-right: 38px !important; }
+          /* --- Padding Adjustments for Icons (Scoped to SelectInput only) --- */
+          .mito-select-wrapper .mito-input-base.has-icon-left { padding-left: 38px !important; }
+          .mito-select-wrapper .mito-input-base.has-icon-right { padding-right: 38px !important; }
 
           /* --- Outline Variant --- */
-          .mito-input-outline {
+          .mito-select-wrapper .mito-input-outline {
             background-color: var(--scoped-bg);
             border: 1px solid var(--scoped-border);
             border-radius: 6px;
             padding: 12px 14px;
           }
-          .mito-input-outline[data-state="open"], .mito-input-outline:focus-visible { border-color: var(--scoped-active); box-shadow: 0 0 0 1px var(--scoped-active); }
-          .mito-input-outline[data-error="true"] { border-color: var(--scoped-error); box-shadow: 0 0 0 1px var(--scoped-error); }
+          .mito-select-wrapper .mito-input-outline[data-state="open"],
+          .mito-select-wrapper .mito-input-outline:focus-visible { border-color: var(--scoped-active); box-shadow: 0 0 0 1px var(--scoped-active); }
+          .mito-select-wrapper .mito-input-outline[data-error="true"] { border-color: var(--scoped-error); box-shadow: 0 0 0 1px var(--scoped-error); }
           
           /* Floating Label Logic (Outline only) */
-          .mito-input-floating-label {
+          .mito-select-wrapper .mito-input-floating-label {
             position: absolute;
             left: 14px;
             top: 50%;
@@ -413,60 +414,62 @@ export const SelectInput = React.forwardRef<HTMLButtonElement, SelectInputProps>
             align-items: center;
             gap: 6px;
           }
-          .mito-input-floating-label .mito-floating-icon {
+          .mito-select-wrapper .mito-input-floating-label .mito-floating-icon {
             display: flex;
             align-items: center;
             justify-content: center;
           }
-          .mito-input-floating-label.has-icon { left: 38px; }
-          .mito-input-floating-label.floating {
+          .mito-select-wrapper .mito-input-floating-label.has-icon { left: 38px; }
+          .mito-select-wrapper .mito-input-floating-label.floating {
             top: 0;
             left: 10px;
             font-size: 0.75rem;
             color: var(--scoped-active);
             font-weight: 500;
           }
-          .mito-input-floating-label.floating.has-icon { left: 10px; }
-          .mito-input-outline[data-error="true"] .mito-input-floating-label.floating { color: var(--scoped-error); }
+          .mito-select-wrapper .mito-input-floating-label.floating.has-icon { left: 10px; }
+          .mito-select-wrapper .mito-input-outline[data-error="true"] .mito-input-floating-label.floating { color: var(--scoped-error); }
 
           /* --- Material Variant --- */
-          .mito-input-material {
+          .mito-select-wrapper .mito-input-material {
             background-color: transparent;
             border-bottom: 2px solid var(--scoped-border);
             border-radius: 4px 4px 0 0;
             padding: 8px 0;
           }
-          .mito-input-material.has-icon-left { padding-left: 32px !important; }
-          .mito-input-material[data-state="open"], .mito-input-material:focus-visible {
+          .mito-select-wrapper .mito-input-material.has-icon-left { padding-left: 32px !important; }
+          .mito-select-wrapper .mito-input-material[data-state="open"],
+          .mito-select-wrapper .mito-input-material:focus-visible {
             border-image: linear-gradient(to right, var(--scoped-active), #0202020a);
             border-image-slice: 1;
             border-bottom-width: 2px;
             background-color: rgba(156, 163, 175, 0.05);
           }
-          .mito-input-material[data-error="true"] { border-bottom-color: var(--scoped-error); border-image: none; }
-          .mito-input-material .mito-input-icon.left { left: 4px; }
+          .mito-select-wrapper .mito-input-material[data-error="true"] { border-bottom-color: var(--scoped-error); border-image: none; }
+          .mito-select-wrapper .mito-input-material .mito-input-icon.left { left: 4px; }
           
           /* Material Floating Label */
-          .mito-input-material .mito-input-floating-label { left: 0; background: transparent; margin-left: 0; }
-          .mito-input-material .mito-input-floating-label.has-icon { left: 32px; }
-          .mito-input-material .mito-input-floating-label.floating { top: -8px; left: 0; }
+          .mito-select-wrapper .mito-input-material .mito-input-floating-label { left: 0; background: transparent; margin-left: 0; }
+          .mito-select-wrapper .mito-input-material .mito-input-floating-label.has-icon { left: 32px; }
+          .mito-select-wrapper .mito-input-material .mito-input-floating-label.floating { top: -8px; left: 0; }
 
           /* --- Neumorphic Variant --- */
-          .mito-input-neumorphic {
+          .mito-select-wrapper .mito-input-neumorphic {
             background-color: var(--mito-input-bg-env);
             border-radius: 8px;
             box-shadow: 4px 4px 8px var(--mito-input-shadow-dark), -4px -4px 8px var(--mito-input-shadow-light);
             border: 1px solid transparent;
             padding: 14px 16px;
           }
-          .mito-input-neumorphic[data-state="open"], .mito-input-neumorphic:focus-visible { 
+          .mito-select-wrapper .mito-input-neumorphic[data-state="open"],
+          .mito-select-wrapper .mito-input-neumorphic:focus-visible { 
             box-shadow: inset 4px 4px 8px var(--mito-input-shadow-dark), inset -4px -4px 8px var(--mito-input-shadow-light); 
           }
-          .mito-input-neumorphic[data-error="true"] { border-color: var(--scoped-error); }
-          .mito-input-neumorphic .mito-input-floating-label { background: transparent; }
+          .mito-select-wrapper .mito-input-neumorphic[data-error="true"] { border-color: var(--scoped-error); }
+          .mito-select-wrapper .mito-input-neumorphic .mito-input-floating-label { background: transparent; }
 
           /* --- Skeuomorphic Variant --- */
-          .mito-input-skeuomorphic {
+          .mito-select-wrapper .mito-input-skeuomorphic {
             background-color: var(--mito-input-bg-env);
             background-image: linear-gradient(to bottom, rgba(0,0,0,0.06) 0%, rgba(255,255,255,0) 100%);
             border-radius: 6px;
@@ -474,15 +477,16 @@ export const SelectInput = React.forwardRef<HTMLButtonElement, SelectInputProps>
             border: 1px solid rgba(0,0,0,0.2);
             padding: 12px 14px;
           }
-          .mito-input-wrapper.mito-input-dark .mito-input-skeuomorphic {
+          .mito-select-wrapper.mito-input-dark .mito-input-skeuomorphic {
             background-image: linear-gradient(to bottom, rgba(0,0,0,0.4) 0%, rgba(255,255,255,0) 100%);
             box-shadow: inset 0 2px 6px rgba(0,0,0,0.5), 0 1px 0 rgba(255,255,255,0.1);
             border-color: rgba(255,255,255,0.1);
           }
-          .mito-input-skeuomorphic[data-state="open"], .mito-input-skeuomorphic:focus-visible { box-shadow: inset 0 2px 6px rgba(0,0,0,0.2), 0 0 0 2px rgba(37, 99, 235, 0.4); }
-          .mito-input-skeuomorphic[data-error="true"] { border-color: var(--scoped-error); box-shadow: inset 0 2px 6px rgba(0,0,0,0.2), 0 0 0 1px var(--scoped-error); }
+          .mito-select-wrapper .mito-input-skeuomorphic[data-state="open"],
+          .mito-select-wrapper .mito-input-skeuomorphic:focus-visible { box-shadow: inset 0 2px 6px rgba(0,0,0,0.2), 0 0 0 2px rgba(37, 99, 235, 0.4); }
+          .mito-select-wrapper .mito-input-skeuomorphic[data-error="true"] { border-color: var(--scoped-error); box-shadow: inset 0 2px 6px rgba(0,0,0,0.2), 0 0 0 1px var(--scoped-error); }
 
-          /* Popover Content Styling */
+          /* Popover Content Styling (Rendered in Portal outside .mito-select-wrapper) */
           .mito-select-popover {
             width: var(--radix-popover-trigger-width);
             max-height: 250px;
@@ -539,7 +543,7 @@ export const SelectInput = React.forwardRef<HTMLButtonElement, SelectInputProps>
           }
 
           /* Validation Text */
-          .mito-input-error-text {
+          .mito-select-wrapper .mito-input-error-text {
             font-size: 0.75rem;
             color: var(--scoped-error);
             margin-top: 6px;
@@ -611,6 +615,8 @@ export const SelectInput = React.forwardRef<HTMLButtonElement, SelectInputProps>
               <Component
                 ref={ref}
                 id={inputId}
+                name={alias}
+                aria-label={inputLabel ? undefined : (placeholder || alias)}
                 type="button"
                 disabled={readOnly}
                 data-state={isOpen ? "open" : "closed"}
@@ -618,7 +624,7 @@ export const SelectInput = React.forwardRef<HTMLButtonElement, SelectInputProps>
                 data-error={hasError}
                 aria-invalid={hasError}
                 aria-describedby={hasError ? `${alias}-error` : undefined}
-                className={`mito-input-base mito-input-${design} ${icon && !floatingLabel ? `has-icon-${iconPosition}` : ''}`}
+                className={`mito-input-base mito-select-trigger mito-input-${design} ${icon && !floatingLabel ? `has-icon-${iconPosition}` : ''}`}
                 {...props}
               >
                 <span 

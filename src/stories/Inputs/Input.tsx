@@ -490,6 +490,7 @@ export const Input = React.forwardRef<HTMLInputElement, InputProps>(({
             ref={ref}
             id={inputId}
             name={alias}
+            aria-label={inputLabel ? undefined : (placeholder || alias)}
             type={type}
             value={fieldValue !== undefined ? fieldValue : ''}
             onChange={handleChange}

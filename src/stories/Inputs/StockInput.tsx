@@ -486,6 +486,7 @@ export const StockInput = React.forwardRef<HTMLInputElement, StockInputProps>(({
             inputRef={ref}
             id={inputId}
             name={alias}
+            aria-label={inputLabel ? undefined : (placeholder || alias)}
             {...({
               mask: Number,
               scale: 2,

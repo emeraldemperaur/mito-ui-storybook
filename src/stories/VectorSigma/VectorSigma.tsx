@@ -5,8 +5,9 @@ import { XFormSchema, type XFormType, type XFormQuery, SectionSchema } from '../
 import { normalizeXForm } from '../../utils/Minerva'; 
 import { Teletraan1, type Teletraan1Props } from './Teletraan1';
 import { z } from "zod";
-import { Theme, Button, Flex, type ThemeProps } from '@radix-ui/themes';
+import { Theme, type ThemeProps } from '@radix-ui/themes';
 import { Formik, Form, useFormikContext, type FormikHelpers } from 'formik';
+import { Button } from '../Buttons/Button';
 import * as Yup from 'yup';
 import '../../styles/main.scss';
 
@@ -15,14 +16,36 @@ export interface VectorSigmaRenderProps<T extends Record<string, any> = Record<s
     onSubmit?: (values: T, actions: FormikHelpers<T>, instance: VectorSigma<T>) => void | Promise<any>;
     /** Optional Radix UI Theme configuration for structural CSS tokens. */
     theme?: Omit<ThemeProps, 'children'>;
-    /** Optional toggle to disable the default xForm bottom submit button. */
+    /** Optional toggle to completely disable the default xForm bottom submit button. @default false */
     buttonOverride?: boolean;
+    /** Injects an optional H2 title block above the form payload. */
+    title?: string;
+    /** Injects an optional sub-description paragraph beneath the header title block. */
+    description?: string;
+    /** Controls whether the heading block appears above or below the logo. @default 'aboveLogo' */
+    headingPosition?: 'aboveLogo' | 'belowLogo';
+    /** Header section text color configuration. Overrides global theme logic for legibility. */
+    headingTextColor?: string;
+    /** Header section background fill configuration. Overrides global theme logic. */
+    headingBackgroundColor?: string;
+    /** Visually toggles off the loaded schema logo without disrupting layout nodes. @default false */
+    hideLogo?: boolean;
+    /** Failsafe image source deployed if the original schema logo URL triggers an error. */
+    fallbackLogo?: string;
+    /** Overrides the horizontal alignment of the schema logo. */
+    logoPosition?: 'left' | 'center' | 'right';
+    /** Overrides the default "Submit" text on the terminal button. */
+    submitText?: string;
+    /** Custom base color for the submit button. */
+    submitButtonColor?: string;
+    /** Custom text color for the submit button. */
+    submitButtonTextColor?: string;
+    /** Custom hover background color for the submit button. */
+    submitButtonHoverColor?: string;
+    /** Custom hover text color for the submit button. */
+    submitButtonHoverTextColor?: string;
 }
 
-/**
- * SSR-safe Observer Component. Evaluates Formik state inside the React tree lifecycle
- * and synchronizes it backwards into the VectorSigma Class Instance.
- */
 const FormikStateObserver = <T extends Record<string, any>>({ instance }: { instance: VectorSigma<T> }): null => {
     const formikContext = useFormikContext<T>();
     
@@ -43,7 +66,6 @@ const FormikStateObserver = <T extends Record<string, any>>({ instance }: { inst
             };
         }
 
-        // Status code tracking logic (0 = Empty, 1 = In Progress)
         if (formikContext.dirty && instance.statusCode === 0) {
             instance.statusCode = 1;
             instance.timeInProgress = Date.now();
@@ -64,11 +86,6 @@ export interface VectorSigmaActions<T> {
     setSubmitting: (isSubmitting: boolean) => void;
 }
 
-/**
- * @class VectorSigma
- * @description Builder pattern class for generating dynamic Formik-powered Teletraan1 structures.
- * Strongly typed and architected to support isomorphic Client/SSR lifecycles.
- */
 export class VectorSigma<T extends Record<string, any> = Record<string, any>> {
     public isValid: boolean = false;
     public formObject: XFormType;
@@ -164,13 +181,18 @@ export class VectorSigma<T extends Record<string, any> = Record<string, any>> {
 
                 let validator: any;
                 if (isArray) {
-                    validator = Yup.array();
+                    validator = Yup.array().typeError(q.errorText || `${q.inputLabel || 'This field'} is invalid`);
                 } else if (isBoolean) {
-                    validator = Yup.boolean();
+                    validator = Yup.boolean().typeError(q.errorText || `${q.inputLabel || 'This field'} must be true or false`);
                 } else if (isNumber) {
-                    validator = Yup.number();
+                    validator = Yup.number()
+                        .transform((_value, originalValue) => {
+                            const parsed = String(originalValue).trim();
+                            return parsed === '' ? null : Number(parsed);
+                        })
+                        .typeError(q.errorText || `${q.inputLabel || 'This field'} must be a valid numeric amount`);
                 } else {
-                    validator = Yup.string();
+                    validator = Yup.string().typeError(q.errorText || `${q.inputLabel || 'This field'} is invalid`);
                 }
 
                 if (q.isRequired) {
@@ -243,7 +265,6 @@ export class VectorSigma<T extends Record<string, any> = Record<string, any>> {
         });
     }
 
-    // Builder Pattern Methods omitted for brevity (unchanged from original)
     public setUUID(uuid: string): this { this.formObject.uuid = uuid; return this; }
     public setName(name: string): this { this.formObject.name = name; return this; }
     public setBrand(color: string, logo?: string, logoPosition?: 'left' | 'center' | 'right'): this {
@@ -263,24 +284,70 @@ export class VectorSigma<T extends Record<string, any> = Record<string, any>> {
         return this;
     }
 
-    /**
-     * VΣ `transform()` method for evaluating and mounting the Teletraan1 components inside a Formik state wrapper.
-     */
     public transform(options?: VectorSigmaRenderProps<T>): JSX.Element {
         this.validateAndSet(this.formObject); 
         const sanitizedData = normalizeXForm(this.formObject);
 
         const { initialValues, validationSchema } = this.buildFormikConfig(sanitizedData);
         const isCodexMode = options?.displayMode === 'codex';
+        const resolvedButtonVariant = options?.design || 'material';
+        const isBulkyButton = resolvedButtonVariant === 'neumorphic' || resolvedButtonVariant === 'skeuomorphic';
+        
         const themeConfig: ThemeProps = {
-            appearance: 'inherit', 
+            appearance: options?.darkModeColors ? 'dark' : 'light', 
             accentColor: 'blue',
             radius: 'medium',
             ...options?.theme
         };
+
+        const renderHeadingBlock = () => {
+            if (!options?.title && !options?.description) return null;
+            return (
+                <div style={{
+                    backgroundColor: options.headingBackgroundColor || 'transparent',
+                    color: options.headingTextColor || 'inherit',
+                    padding: options.headingBackgroundColor ? '24px' : '0 0 24px 0',
+                    borderRadius: '0px',
+                    marginBottom: '24px',
+                    width: '100%',
+                    boxSizing: 'border-box'
+                }}>
+                    {options.title && <h2 style={{ margin: '0 0 8px 0', fontSize: '1.5rem', fontWeight: 600 }}>{options.title}</h2>}
+                    {options.description && <p style={{ margin: 0, opacity: 0.85, fontSize: '0.95rem' }}>{options.description}</p>}
+                </div>
+            );
+        };
+
+        const renderLogoBlock = () => {
+            if (!sanitizedData.logo) return null;
+            const resolvedLogoPosition = options?.logoPosition || sanitizedData.logoPosition || 'left';
+            return (
+                <div style={{ 
+                    display: 'flex', width: '100%', marginBottom: '24px', 
+                    justifyContent: 
+                        resolvedLogoPosition === 'center' ? 'center' :
+                        resolvedLogoPosition === 'right' ? 'flex-end' : 
+                        'flex-start',
+                    visibility: options?.hideLogo ? 'hidden' : 'visible'
+                }}>
+                    <img 
+                        src={sanitizedData.logo} 
+                        alt={`${sanitizedData.name || 'Form'} Logo`} 
+                        style={{ maxHeight: '64px', maxWidth: '100%', objectFit: 'contain' }} 
+                        onError={(e) => {
+                            if (options?.fallbackLogo) {
+                                e.currentTarget.src = options.fallbackLogo;
+                            } else {
+                                e.currentTarget.style.display = 'none';
+                            }
+                        }}
+                    />
+                </div>
+            );
+        };
         
         return (
-            <Theme {...themeConfig}>
+            <Theme {...themeConfig} style={{ width: '100%', maxWidth: '100%', boxSizing: 'border-box', display: 'flex', flexDirection: 'column' }}>
                 <Formik<T>
                     initialValues={initialValues as unknown as T}
                     validationSchema={validationSchema}
@@ -305,53 +372,74 @@ export class VectorSigma<T extends Record<string, any> = Record<string, any>> {
                     }}
                 >
                     {({ isSubmitting }) => (
-                        <Form>
+                        <Form style={{ width: '100%', maxWidth: '100%', boxSizing: 'border-box', display: 'flex', flexDirection: 'column', flexGrow: 1 }}>
                             {isSubmitting ? this.isSubmitting = isSubmitting : null}
                             <FormikStateObserver<T> instance={this} />
 
-                            {sanitizedData.logo && (
-                                <div style={{ display: 'flex', width: '100%', marginBottom: '24px', 
-                                    justifyContent: 
-                                        sanitizedData.logoPosition === 'center' ? 'center' :
-                                        sanitizedData.logoPosition === 'right' ? 'flex-end' : 
-                                        'flex-start'
-                                }}>
-                                    <img 
-                                        src={sanitizedData.logo} 
-                                        alt={`${sanitizedData.name || 'Form'} Logo`} 
-                                        style={{ maxHeight: '64px', maxWidth: '100%', objectFit: 'contain' }} 
-                                    />
-                                </div>
-                            )}
+                            <div style={{
+                                fontFamily: options?.fontFamily || 'inherit',
+                                width: '100%',
+                                maxWidth: '100%',
+                                display: 'flex',
+                                flexDirection: 'column',
+                                flexGrow: 1,
+                                boxSizing: 'border-box',
+                                overflowX: 'hidden'
+                            }} className={options?.darkModeColors ? 'mito-theme-dark' : 'mito-theme-light'}>
+                                
+                                {options?.headingPosition === 'belowLogo' ? (
+                                    <>
+                                        {renderLogoBlock()}
+                                        {renderHeadingBlock()}
+                                    </>
+                                ) : (
+                                    <>
+                                        {renderHeadingBlock()}
+                                        {renderLogoBlock()}
+                                    </>
+                                )}
 
-                            <Teletraan1 
-                                brandColor={sanitizedData.brandColor} 
-                                xFormModel={sanitizedData} 
-                                darkModeColors={options?.darkModeColors}
-                                {...options} 
-                            />
-                            
-                            {!isCodexMode && !options?.readOnlyMode && !options?.buttonOverride && (
-                                <Flex 
-                                    mt="6" 
-                                    justify="end" 
-                                    style={{ width: '100%', paddingTop: '20px', borderTop: '1px solid var(--gray-5)' }}
-                                >
-                                    <Button 
-                                        type="submit" 
-                                        disabled={isSubmitting}
-                                        style={{ 
-                                            cursor: isSubmitting ? 'wait' : 'pointer',
-                                            padding: '0 24px',
-                                            backgroundColor: sanitizedData.brandColor || '#000000', 
-                                            color: '#fff'
-                                        }}
-                                    >
-                                        {isSubmitting ? 'Submitting...' : 'Submit'}
-                                    </Button>
-                                </Flex>
-                            )}
-                            
+                                <Teletraan1 
+                                    brandColor={sanitizedData.brandColor} 
+                                    xFormModel={sanitizedData} 
+                                    darkModeColors={options?.darkModeColors}
+                                    headingTextColor={options?.headingTextColor}
+                                    headingBackgroundColor={options?.headingBackgroundColor}
+                                    fontFamily={options?.fontFamily}
+                                    design={options?.design}
+                                    {...options} 
+                                />
+                                
+                                {!isCodexMode && !options?.readOnlyMode && !options?.buttonOverride && (
+                                    <div style={{ 
+                                        display: 'flex', 
+                                        justifyContent: 'flex-end',
+                                        alignItems: 'center',
+                                        width: '100%', 
+                                        boxSizing: 'border-box',
+                                        paddingTop: '20px', 
+                                        paddingBottom: isBulkyButton ? '16px' : '0',
+                                        paddingRight: isBulkyButton ? '8px' : '0',
+                                        marginTop: '24px',
+                                        borderTop: `1px solid ${options?.darkModeColors ? 'rgba(255, 255, 255, 0.12)' : 'rgba(0, 0, 0, 0.08)'}` 
+                                    }}>
+                                        <Button 
+                                            type="submit" 
+                                            variant={resolvedButtonVariant}
+                                            darkMode={!!options?.darkModeColors}
+                                            backgroundColor={options?.submitButtonColor || sanitizedData.brandColor || '#000000'}
+                                            darkBackgroundColor={options?.submitButtonColor || options?.darkModeColors?.dark || sanitizedData.brandColor}
+                                            textColor={options?.submitButtonTextColor || (resolvedButtonVariant === 'material' ? '#ffffff' : undefined)}
+                                            hoverColor={options?.submitButtonHoverColor}
+                                            hoverTextColor={options?.submitButtonHoverTextColor}
+                                            fontFamily={options?.fontFamily}
+                                            isLoading={isSubmitting}
+                                        >
+                                            {options?.submitText || 'Submit'}
+                                        </Button>
+                                    </div>
+                                )}
+                            </div>
                         </Form>
                     )}
                 </Formik>
