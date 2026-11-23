@@ -642,7 +642,7 @@ export const DarkModeForm = () => {
 };
 
 // ---------------------------------------------------------------------------
-// 6. ENTERPRISE WYSIWYG SCHEMA BUILDER (DX UTILITY)
+// 6. ENTERPRISE WYSIWYG SCHEMA BUILDER 
 // ---------------------------------------------------------------------------
 export const WYSIWYGSchemaEditor: Story = {
   args: {
@@ -732,7 +732,7 @@ export const WYSIWYGSchemaEditor: Story = {
             inputAlias: `${fieldAlias}_toggled`,
             inputLabel: fieldToggledLabel,
             inputWidth: 12,
-            inputOptions: parsedOptions // Passes options down if it's a select
+            inputOptions: parsedOptions
          };
       }
 
@@ -767,6 +767,9 @@ export const WYSIWYGSchemaEditor: Story = {
       setFieldOptions("");
       setFieldTriggerValue("");
       setFieldToggledLabel("");
+      setFieldMinValue('');
+      setFieldMaxValue('');
+      setFieldStepValue('');
     };
 
     const inputStyle = { padding: '8px', border: '1px solid #cbd5e1', borderRadius: '4px', boxSizing: 'border-box' as const, width: '100%', fontSize: '13px' };
@@ -775,12 +778,9 @@ export const WYSIWYGSchemaEditor: Story = {
     return (
       <div style={{ display: 'flex', flexDirection: 'column', gap: '24px', fontFamily: 'system-ui, sans-serif', width: '100%' }}>
         
-        {/* ==========================================
-            TOP: CONFIGURATION CONSOLE 
-        ========================================== */}
+      
         <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', padding: '24px', backgroundColor: '#f8fafc', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
           
-          {/* Form Level Config */}
           <div style={{ display: 'flex', gap: '16px', borderBottom: '1px solid #cbd5e1', paddingBottom: '16px' }}>
             <div style={{ flex: 2 }}>
               <label style={labelStyle}>Form Name</label>
@@ -804,7 +804,6 @@ export const WYSIWYGSchemaEditor: Story = {
             </div>
           </div>
 
-          {/* Section Level Config */}
           <div style={{ display: 'flex', gap: '16px', alignItems: 'flex-end', borderBottom: '1px solid #cbd5e1', paddingBottom: '16px' }}>
             <div style={{ flex: 2 }}>
               <label style={labelStyle}>Target Section</label>
@@ -829,13 +828,13 @@ export const WYSIWYGSchemaEditor: Story = {
 
           <h3 style={{ margin: '8px 0 0 0', fontSize: '1.1rem' }}>Inject Field into Active Section</h3>
           
-          {/* Field Core Attributes */}
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: '12px' }}>
             <div style={{ flex: '1 1 20%' }}>
               <label style={labelStyle}>Component Type</label>
               <select value={fieldType} onChange={(e) => setFieldType(e.target.value)} style={inputStyle}>
                 <optgroup label="Standard Inputs">
                   <option value="text-input">Text Input</option>
+                  <option value="textarea-input">Text Area / Code Editor</option>
                   <option value="password-input">Password Input</option>
                   <option value="currency-input">Currency Input</option>
                   <option value="phone-input">Phone Input</option>
@@ -864,7 +863,7 @@ export const WYSIWYGSchemaEditor: Story = {
             </div>
             <div style={{ flex: '1 1 20%' }}>
               <label style={labelStyle}>JSON Alias (Key)</label>
-              <input value={fieldAlias} onChange={(e) => setFieldAlias(e.target.value)} placeholder="e.g. accessCode" style={inputStyle} />
+              <input value={fieldAlias} onChange={(e) => setFieldAlias(e.target.value)} placeholder="e.g. initScript" style={inputStyle} />
             </div>
             <div style={{ flex: '1 1 10%' }}>
               <label style={labelStyle}>Grid Width</label>
@@ -886,10 +885,12 @@ export const WYSIWYGSchemaEditor: Story = {
               <label style={labelStyle}>Placeholder</label>
               <input value={fieldPlaceholder} onChange={(e) => setFieldPlaceholder(e.target.value)} placeholder="Optional grey text" style={inputStyle} />
             </div>
-            <div style={{ flex: 1 }}>
-              <label style={labelStyle}>Default Value</label>
-              <input value={fieldDefaultValue} onChange={(e) => setFieldDefaultValue(e.target.value)} placeholder="Initial value" style={inputStyle} />
-            </div>
+            {fieldType !== 'textarea-input' && (
+              <div style={{ flex: 1 }}>
+                <label style={labelStyle}>Default Value</label>
+                <input value={fieldDefaultValue} onChange={(e) => setFieldDefaultValue(e.target.value)} placeholder="Initial value" style={inputStyle} />
+              </div>
+            )}
             <div style={{ flex: 1 }}>
               <label style={labelStyle}>Custom Error Text</label>
               <input value={fieldErrorText} onChange={(e) => setFieldErrorText(e.target.value)} placeholder="Overrides default validation msg" style={inputStyle} />
@@ -900,9 +901,40 @@ export const WYSIWYGSchemaEditor: Story = {
             </div>
           </div>
 
-          {/* Advanced / Conditional Sub-panels */}
           <div style={{ display: 'flex', gap: '12px', alignItems: 'flex-end', backgroundColor: '#e2e8f0', padding: '12px', borderRadius: '6px' }}>
             
+            {fieldType === 'textarea-input' && (
+              <>
+                <div style={{ flex: 1 }}>
+                  <label style={labelStyle}>Initial Rows (Height)</label>
+                  <input 
+                    type="number" 
+                    min="2" 
+                    max="30" 
+                    value={fieldMaxValue} 
+                    onChange={(e) => setFieldMaxValue(e.target.value as any)} 
+                    placeholder="Default: 4" 
+                    style={inputStyle} 
+                  />
+                </div>
+                <div style={{ flex: 1.5 }}>
+                  <label style={labelStyle}>Code Language (Requires 'code' or 'script' in alias)</label>
+                  <select 
+                    value={fieldDefaultValue} 
+                    onChange={(e) => setFieldDefaultValue(e.target.value)} 
+                    style={inputStyle}
+                  >
+                    <option value="">Plain Text (Standard Textarea)</option>
+                    <option value="javascript">JavaScript</option>
+                    <option value="typescript">TypeScript</option>
+                    <option value="json">JSON</option>
+                    <option value="bash">Bash / Shell</option>
+                    <option value="python">Python</option>
+                  </select>
+                </div>
+              </>
+            )}
+
             {(fieldType.includes('dropdown') || fieldType.includes('select') || fieldType.includes('radio') || fieldType.includes('checkbox')) && !fieldType.includes('country') && (
                <div style={{ flex: 2 }}>
                  <label style={labelStyle}>Input Options (Comma Separated)</label>
@@ -937,6 +969,7 @@ export const WYSIWYGSchemaEditor: Story = {
                         <label style={labelStyle}>Nested Input Type</label>
                         <select value={fieldToggledType} onChange={(e) => setFieldToggledType(e.target.value)} style={inputStyle}>
                             <option value="text-input">Text Input</option>
+                            <option value="textarea-input">Text Area / Code Editor</option>
                             <option value="dropdown-input">Dropdown Select</option>
                         </select>
                     </div>
@@ -988,7 +1021,7 @@ export const WYSIWYGSchemaEditor: Story = {
   },
   parameters: {
     docs: {
-      story: { iframeHeight: 1400 }, 
+      story: { iframeHeight: 700 }, 
       source: {
         code: `// Use the interactive tool above to generate your schema. 
 // Then, copy the JSON output and pass it to VectorSigma:

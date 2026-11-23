@@ -29,10 +29,11 @@ import {
     buttonInputType, checkboxInputType, conditionalInputType, countrydropdownInputType, countrymultiselectInputType, creditCardInputType, 
     currencyInputType, datePickerInputType, dateRangePickerInputType, dateTimePickerInputType, dropdownInputType, 
     fileInputType, fileMultipleInputType, passwordInputType, radioInputType, rangeSliderInputType, selectInputType, 
-    sliderInputType, stockInputType, textInputType, toggleInputType 
+    sliderInputType, stockInputType, textareaInputType, textInputType, toggleInputType 
 } from "../../utils/Voltaire";
 import {  type XFormQuery, type XFormType } from '../../utils/Voltron';
 import { VectorSigma } from './VectorSigma';
+import { TextAreaInput } from '../Inputs/TextAreaInput';
 
 export type Teletraan1Display = 'accordion' | 'codice' | 'codex' | 'dual';
 export type Teletraan1Design = 'material' | 'outline' | 'neumorphic' | 'skeuomorphic';
@@ -188,6 +189,17 @@ export const Teletraan1 = ({
                 return <SelectInput key={uid} {...layoutProps} options={query.inputOptions || [InputOptionsPlaceholder]} onOptionChange={handleValueChange} />;
             case toggleInputType.includes(normalizedType):
                 return <ToggleInput key={uid} {...layoutProps} icon="layers" onChange={handleValueChange} />;
+            case textareaInputType.includes(normalizedType):
+                return (
+                    <TextAreaInput 
+                        key={uid} 
+                        {...layoutProps} 
+                        rows={Number(query.inputHeight) || 4} 
+                        sourceCode={query.inputAlias.toLowerCase().includes('sourcecode') || query.inputAlias.toLowerCase().includes('scriptcode')}
+                        sourceLang={query.defaultValue} 
+                        onChange={handleValueChange} 
+                    />
+                );
             
             default:
                 return <Input key={uid} {...layoutProps} onChange={handleValueChange} />;

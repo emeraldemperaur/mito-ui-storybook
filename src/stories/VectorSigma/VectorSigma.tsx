@@ -146,7 +146,7 @@ export class VectorSigma<T extends Record<string, any> = Record<string, any>> {
             "selectmultiple", "selectmultipleinput", "selectmultiple-input", "input-selectmultiple", "inputselectmultiple",
             "countrymultiselect", "countrymultiselectinput", "countrymultiselect-input", "input-countrymultiselect", "inputcountrymultiselect",
             "range", "rangeslider", "rangeinput", "rangesliderinput", "rangeslider-input", "range-input", "input-rangeslider", "inputrangeslider",
-            "slider", "sliderinput", "slider-input", "input-slider", "inputslider"
+            
         ];
 
         const booleanTypes = [
@@ -156,7 +156,8 @@ export class VectorSigma<T extends Record<string, any> = Record<string, any>> {
 
         const numberTypes = [
             "currency", "currencyinput", "currency-input", "input-currency", "inputcurrency",
-            "stock", "stockinput", "stock-input", "input-stock", "inputstock"
+            "stock", "stockinput", "stock-input", "input-stock", "inputstock",
+            "slider", "sliderinput", "slider-input", "input-slider", "inputslider"
         ];
 
         const traverseQueries = (queries: XFormQuery[]) => {

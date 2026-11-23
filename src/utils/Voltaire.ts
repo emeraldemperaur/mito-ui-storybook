@@ -32,6 +32,7 @@ export const selectInputType: readonly string[] = ["select", "selectinput", "sel
 export const selectMultipleInputType: readonly string[] = ["selectmultiple", "selectmultipleinput", "selectmultiple-input", "input-selectmultiple", "inputselectmultiple"];
 export const sliderInputType: readonly string[] = ["slider", "sliderinput", "slider-input", "input-slider", "inputslider"];
 export const rangeSliderInputType: readonly string[] = ["range", "rangeslider", "rangeinput", "rangesliderinput", "rangeslider-input", "range-input", "input-rangeslider", "inputrangeslider"];
+export const textareaInputType: readonly string[] = ["textarea", "textareainput", "textarea-input", "input-textarea", "inputtextarea"];
 export const toggleInputType: readonly string[] = ["toggle", "switch", "toggleinput", "toggle-input", "input-toggle", "inputtoggle"];
 export const sectionTitleOutputType: readonly string[] = ["title", "xtitle", "sectiontitle", "titlesection"];
 export const conditionalInputType: readonly string[] = ["conditional", "conditionaltoggle", "conditionalcheckbox", "conditionalselect", "conditional-toggle", "conditional-select", "conditional-checkbox"];

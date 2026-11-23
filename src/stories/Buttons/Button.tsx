@@ -195,7 +195,10 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(({
   if (hoverTextColor) customStyles['--mito-btn-hover-text'] = hoverTextColor;
   if (darkHoverTextColor) customStyles['--mito-btn-hover-text-dark'] = darkHoverTextColor;
   if (textSize) customStyles['--mito-btn-size'] = typeof textSize === 'number' ? `${textSize}px` : textSize;
-  if (fontFamily) customStyles['--mito-btn-font'] = fontFamily;
+  if (fontFamily) {
+    customStyles['--mito-btn-font'] = fontFamily;
+    customStyles.fontFamily = fontFamily; 
+  }
 
   const handlePressStart = (e: React.MouseEvent<HTMLButtonElement> | React.TouchEvent<HTMLButtonElement>) => {
     if (onLongClick && !isInteractionDisabled) {

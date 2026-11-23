@@ -57,7 +57,7 @@ const VolatileWidget = ({ name = "Primary Data Grid" }: { name?: string }) => {
  * and firing external telemetry hooks (e.g., Sentry, Datadog).
  */
 const meta: Meta<typeof ErrorBoundary> = {
-  title: 'Layout/ErrorBoundary',
+  title: 'HigherOrderComponent/ErrorBoundary',
   component: ErrorBoundary,
   tags: ['autodocs'],
   parameters: {

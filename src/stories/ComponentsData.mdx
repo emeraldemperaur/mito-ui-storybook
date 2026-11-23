@@ -10,6 +10,40 @@ Process, parse, and render massive datasets without UI thread blocking.
 
 Mito's data architecture is built on top of high-performance canvas layers and optimized DOM reconcilers, designed specifically for enterprise telemetry and complex agentic outputs.
 
-* **`<TelemetryGrid />`**: Interactive, sortable, high-density data tables with built-in pagination and virtualized scrolling.
-* **`<TemporalChart />`**: Real-time graphing controls optimized for displaying continuous agent operational data.
-* **`<StateNode />`**: Visual indicators for zero-trust authorization states, backend system health, and MCP connectivity metrics.
+- **`<DataTable />`**: A highly extensible, SSR-safe data grid designed for complex enterprise interfaces.
+- **`<DataChart />`**: Real-time visualization charts optimized for displaying high-density enterprise data.
+
+---
+
+## DataTable
+
+The `DataTable` component is built to handle robust datasets with built-in support for client-side sorting, pagination, and multi-row selection, while seamlessly inheriting your application's physical design language (Material, Neumorphic, Outline, etc.).
+
+### Key Capabilities
+- **Advanced Column Rendering**: You can bypass raw text outputs and inject complex React elements (like status badges, progress bars, or action buttons) into any cell using the `render` method on a column definition.
+- **Client-Side Sorting**: Instantly toggleable by setting `sortable: true` on any column.
+- **Stateful Pagination**: Breaks massive datasets into controlled views via the `pagination` prop.
+- **Composite Headers & Footers**: Easily inject custom search bars or action panels using `headerNode` and `footerNode`.
+
+### Basic Usage Example
+
+```tsx
+import { DataTable, ColumnDef } from '@emeraldemperaur/mito-ui';
+
+interface User { id: string; name: string; status: string; }
+
+const columns: ColumnDef<User>[] = [
+  { header: 'ID', accessor: 'id', sortable: true },
+  { header: 'Name', accessor: 'name', sortable: true },
+  { 
+    header: 'Status', 
+    accessor: 'status', 
+    render: (row) => <Badge 'Active' 'error'} 'success' : ? variant="{row.status">{row.status}</Badge> 
+  }
+];
+
+const users = [{ id: '1', name: 'Optimus', status: 'Active' }];
+
+export const MyTable = () => (
+  <DataTable columns="{columns}" data="{users}" design="neumorphic" pagination="{true}" selectable="{true}"/>
+);

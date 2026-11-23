@@ -191,5 +191,16 @@ export const InputOptionsPlaceholder: InputOption = {
   tag: "DEBUG",
   score: 0,
   note: "None",
-  optionurl: "" // Fixed lowercase 'u' structural casing conflict to perfectly match the InputOption schema definition contract
+  optionurl: ""
 };
+
+export interface ButtonColorOverrides {
+  backgroundColor?: string;
+  textColor?: string;
+  darkBackgroundColor?: string;
+  darkTextColor?: string;
+  hoverColor?: string;
+  hoverTextColor?: string;
+  darkHoverColor?: string;
+  darkHoverTextColor?: string;
+}
