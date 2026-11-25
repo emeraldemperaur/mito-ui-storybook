@@ -539,6 +539,7 @@ const RoboticsTeleoperationWrapper = () => {
           design="material"
           fontFamily='IBM Plex Serif'
           confirmText="Reboot Unit"
+          confirmButtonOverrides={{darkBackgroundColor: '#FF4D00', backgroundColor: '#FF4D00', textColor: '#ffffff', darkTextColor: '#ffffff'}}
           onConfirm={() => {
             alert(`Rebooting ${selectedBot?.id}...`);
             setIsModalOpen(false);
@@ -643,6 +644,7 @@ export const TeleoperationHub = () => {
           design="material"
           fontFamily="IBM Plex Serif"
           confirmText="Reboot Unit"
+          confirmButtonOverrides={{darkBackgroundColor: '#FF4D00', backgroundColor: '#FF4D00', textColor: '#ffffff', darkTextColor: '#ffffff'}}
         >
           <p>Running deep scan...</p>
         </Modal>,
@@ -1098,6 +1100,9 @@ const CRUDWrapper = () => {
             fontFamily="Google Sans Code"
             title={`Telemetry Stream: ${selectedUav?.designation}`}
             confirmText="Close Feed"
+            confirmButtonOverrides={{darkBackgroundColor: '#10b981', backgroundColor: '#10b981', textColor: '#ffffff', darkTextColor: '#ffffff'}}
+            cancelButtonOverrides={{darkBackgroundColor: '#800020', backgroundColor: '#800020', textColor: '#ffffff', darkTextColor: '#ffffff'}}
+            darkTextColor='#ffffff'
             onConfirm={closeAll}
           >
             <div style={{ height: '300px', backgroundColor: '#0f172a', borderRadius: '8px', padding: '16px', color: '#10b981', fontFamily: 'Google Sans Code' }}>

@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import type { Meta, StoryObj } from '@storybook/react';
 import { TextAreaInput, type TextAreaProps } from './TextAreaInput';
+import { Form, Formik } from 'formik';
+import { Row } from '../Layout/Row';
 
 
 const meta: Meta<TextAreaProps> = {
@@ -294,7 +296,12 @@ export const CodeSnippetEditor = () => {
 // 3. ARCHITECTURAL VARIANTS
 // ---------------------------------------------------------------------------
 export const ArchitecturalVariants: Story = {
-  render: () => (
+  render: () => {
+    const [outlineValue, setOutlineValue] = useState('');
+    const [materialValue, setMaterialValue] = useState('');
+    const [neumorphicValue, setNeumorphicValue] = useState('');
+    const [skeuomorphicValue, setSkeumorphicValue] = useState('');
+    return(
     <div style={{ display: 'flex', flexDirection: 'column', gap: '32px', padding: '48px', backgroundColor: '#e2e8f0', borderRadius: '16px', maxWidth: '800px' }}>
       
       <TextAreaInput 
@@ -303,6 +310,8 @@ export const ArchitecturalVariants: Story = {
         floatingLabel={true}
         design="outline"
         placeholder="Enter data here..."
+        value={outlineValue}
+        onChange={(value) => setOutlineValue(value)}
       />
 
       <TextAreaInput 
@@ -310,6 +319,8 @@ export const ArchitecturalVariants: Story = {
         inputLabel="Material Variant"
         design="material"
         placeholder=" Standard underline aesthetic..."
+        value={materialValue}
+        onChange={(value) => setMaterialValue(value)}
       />
 
       <TextAreaInput 
@@ -318,6 +329,8 @@ export const ArchitecturalVariants: Story = {
         design="neumorphic"
         placeholder="Ambient 3D inset shadow..."
         backgroundColor="#e2e8f0"
+        value={neumorphicValue}
+        onChange={(value) => setNeumorphicValue(value)}
       />
 
       <TextAreaInput 
@@ -326,10 +339,12 @@ export const ArchitecturalVariants: Story = {
         design="skeuomorphic"
         placeholder="High-fidelity mechanical input well..."
         backgroundColor="#e2e8f0"
+        value={skeuomorphicValue}
+        onChange={(value) => setSkeumorphicValue(value)}
       />
 
     </div>
-  ),
+)},
   parameters: {
     docs: {
       description: {
@@ -420,4 +435,486 @@ export const AdvancedFields = () => {
       }
     }
   }
+};
+
+// ---------------------------------------------------------------------------
+// 5. CODE EDITOR DOWNSTREAM FLOW (VALIDATION, COPY & RAW SUBMISSION)
+// ---------------------------------------------------------------------------
+const defaultFlightScript = `def patrol_sector(altitude_m=120):
+    print(f"UAV climbing to {altitude_m}m")
+    return {"status": "patrolling", "altitude": altitude_m}`;
+
+export const CodeEditorDownstreamFlow: Story = {
+  render: (args) => {
+    const [deployedCode, setDeployedCode] = useState<string | null>(null);
+    const [copied, setCopied] = useState(false);
+
+    const handleCopy = (code: string) => {
+      navigator.clipboard.writeText(code);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1800);
+    };
+
+    return (
+      <Formik
+        initialValues={{ myCode: defaultFlightScript }}
+        validate={(values) => {
+          const errors: Record<string, string> = {};
+          if (!values.myCode.trim()) {
+            errors.myCode = 'Script cannot be empty.';
+          } else if (values.myCode.includes('rm -rf') || values.myCode.includes('os.system')) {
+            errors.myCode = 'Destructive or restricted shell commands are blocked.';
+          }
+          return errors;
+        }}
+        onSubmit={(values, { setSubmitting }) => {
+          setDeployedCode(values.myCode);
+          setSubmitting(false);
+        }}
+      >
+        {(formikProps) => {
+          const lineCount = formikProps.values.myCode.split('\n').length;
+          const charCount = formikProps.values.myCode.length;
+
+          return (
+            <Form
+              style={{
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '20px',
+                maxWidth: '800px',
+                width: '100%',
+                fontFamily: 'system-ui, sans-serif',
+              }}
+            >
+              <div
+                style={{
+                  backgroundColor: '#0f172a',
+                  borderRadius: '12px',
+                  padding: '24px',
+                  border: '1px solid #1e293b',
+                }}
+              >
+                <TextAreaInput
+                  alias="myCode"
+                  inputLabel="Autonomous Flight Script"
+                  sourceCode={true}
+                  sourceLang="python"
+                  darkMode={true}
+                  design={args.design}
+                  isHinted
+                  hintText="Try typing 'rm -rf' or 'os.system' to trigger live validation."
+                  rows={8}
+                />
+
+                <div
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    marginTop: '16px',
+                    flexWrap: 'wrap',
+                    gap: '12px',
+                  }}
+                >
+                  <div style={{ display: 'flex', gap: '10px' }}>
+                    <button
+                      type="submit"
+                      disabled={formikProps.isSubmitting}
+                      style={{
+                        padding: '9px 18px',
+                        backgroundColor: '#2563eb',
+                        color: '#ffffff',
+                        border: 'none',
+                        borderRadius: '6px',
+                        fontWeight: 600,
+                        fontSize: '13px',
+                        cursor: 'pointer',
+                      }}
+                    >
+                      Deploy Script
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleCopy(formikProps.values.myCode)}
+                      style={{
+                        padding: '9px 16px',
+                        backgroundColor: '#1e293b',
+                        color: '#e2e8f0',
+                        border: '1px solid #334155',
+                        borderRadius: '6px',
+                        fontWeight: 500,
+                        fontSize: '13px',
+                        cursor: 'pointer',
+                      }}
+                    >
+                      {copied ? 'Copied!' : 'Copy Code'}
+                    </button>
+                  </div>
+
+                  <span style={{ fontSize: '12px', color: '#94a3b8', fontFamily: 'monospace' }}>
+                    {lineCount} {lineCount === 1 ? 'line' : 'lines'} · {charCount} chars
+                  </span>
+                </div>
+              </div>
+
+              {deployedCode !== null && (
+                <div
+                  style={{
+                    backgroundColor: '#020617',
+                    borderRadius: '8px',
+                    padding: '16px',
+                    border: '1px solid #1e293b',
+                    fontFamily: 'monospace',
+                  }}
+                >
+                  <span
+                    style={{
+                      color: '#34d399',
+                      fontWeight: 700,
+                      fontSize: '11px',
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.06em',
+                    }}
+                  >
+                    Downstream Payload Received (Raw Unescaped String)
+                  </span>
+                  <pre
+                    style={{
+                      margin: '10px 0 0 0',
+                      fontSize: '13px',
+                      color: '#e2e8f0',
+                      whiteSpace: 'pre-wrap',
+                      lineHeight: 1.5,
+                    }}
+                  >
+                    {deployedCode}
+                  </pre>
+                </div>
+              )}
+            </Form>
+          );
+        }}
+      </Formik>
+    );
+  },
+  args: {
+    design: 'outline',
+  },
+  parameters: {
+    docs: {
+      description: {
+        story:
+          'Demonstrates a complete downstream code-editing workflow inside Formik: blocking restricted commands in `validate`, reading `formikProps.values.myCode` in real time for clipboard copy and character/line metrics, and consuming the clean, unescaped raw string inside `onSubmit`.',
+      },
+      source: {
+        code: `import React, { useState } from 'react';
+import { Formik, Form } from 'formik';
+import { TextAreaInput } from '@emeraldemperaur/mito-ui';
+
+const defaultFlightScript = \`def patrol_sector(altitude_m=120):
+    print(f"UAV climbing to {altitude_m}m")
+    return {"status": "patrolling", "altitude": altitude_m}\`;
+
+export const ScriptEditorForm = () => {
+  const [deployedCode, setDeployedCode] = useState<string | null>(null);
+
+  return (
+    <Formik
+      initialValues={{ myCode: defaultFlightScript }}
+      validate={(values) => {
+        const errors: Record<string, string> = {};
+        if (!values.myCode.trim()) {
+          errors.myCode = 'Script cannot be empty.';
+        } else if (values.myCode.includes('rm -rf') || values.myCode.includes('os.system')) {
+          errors.myCode = 'Destructive or restricted shell commands are blocked.';
+        }
+        return errors;
+      }}
+      onSubmit={async (values, { setSubmitting }) => {
+        // values.myCode is a clean, unescaped string ready for APIs or execution engines
+        setDeployedCode(values.myCode);
+
+        // Example API call:
+        // await fetch('/api/execute-script', {
+        //   method: 'POST',
+        //   headers: { 'Content-Type': 'application/json' },
+        //   body: JSON.stringify({ language: 'python', script: values.myCode }),
+        // });
+
+        setSubmitting(false);
+      }}
+    >
+      {(formikProps) => (
+        <Form>
+          <TextAreaInput
+            alias="myCode"
+            inputLabel="Autonomous Flight Script"
+            sourceCode={true}
+            sourceLang="python"
+            darkMode={true}
+            rows={8}
+          />
+
+          <div style={{ display: 'flex', gap: '10px', marginTop: '16px' }}>
+            <button type="submit" disabled={formikProps.isSubmitting}>
+              Deploy Script
+            </button>
+            <button
+              type="button"
+              onClick={() => navigator.clipboard.writeText(formikProps.values.myCode)}
+            >
+              Copy Code ({formikProps.values.myCode.length} chars)
+            </button>
+          </div>
+
+          {deployedCode && <pre>{deployedCode}</pre>}
+        </Form>
+      )}
+    </Formik>
+  );
+};`,
+      },
+    },
+  },
+};
+
+// ---------------------------------------------------------------------------
+// 6. FORMIK INTEGRATION
+// ---------------------------------------------------------------------------
+
+/**
+ * **Interactive Form Pipeline:**
+ * Showcases automatic Formik context binding via `alias`. When rendered inside a `<Formik>` tree
+ * (or passed `formikContext` explicitly), `TextAreaInput` automatically synchronizes `values`, `touched`,
+ * and `errors` using `getIn(context, alias)`—including nested dot-notation paths and PrismJS `sourceCode` editors.
+ */
+export const InteractiveFormTest: Story = {
+  render: (args) => {
+    return (
+      <Formik
+        initialValues={{
+          agent: {
+            systemPrompt: '',
+            safetyNotes: '',
+          },
+          toolConfig: '{\n  "maxRetries": 3,\n  "timeoutMs": 5000\n}',
+        }}
+        validate={(values) => {
+          const errors: Record<string, any> = {};
+
+          if (!values.agent.systemPrompt || values.agent.systemPrompt.trim().length < 20) {
+            errors.agent = {
+              ...errors.agent,
+              systemPrompt: 'System prompt must be at least 20 characters.',
+            };
+          }
+
+          if (!values.agent.safetyNotes) {
+            errors.agent = {
+              ...errors.agent,
+              safetyNotes: 'Safety guardrails are required before deployment.',
+            };
+          }
+
+          if (!values.toolConfig) {
+            errors.toolConfig = 'JSON configuration payload is required.';
+          } else {
+            try {
+              JSON.parse(values.toolConfig);
+            } catch {
+              errors.toolConfig = 'Invalid JSON syntax. Please check brackets and quotes.';
+            }
+          }
+
+          return errors;
+        }}
+        onSubmit={(values, { setSubmitting }) => {
+          alert(`Form Submitted Successfully:\n${JSON.stringify(values, null, 2)}`);
+          setSubmitting(false);
+        }}
+      >
+        {(formikProps) => (
+          <Form
+            style={{
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '20px',
+              width: '100%',
+              fontFamily: 'system-ui, sans-serif',
+            }}
+          >
+            <div
+              style={{
+                backgroundColor: '#1e293b',
+                borderRadius: '8px',
+                padding: '16px',
+                color: '#f8fafc',
+                fontFamily: 'monospace',
+                boxShadow: 'inset 0 2px 4px rgba(0,0,0,0.2)',
+              }}
+            >
+              <span
+                style={{
+                  color: '#fb7185',
+                  fontWeight: 'bold',
+                  fontSize: '12px',
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.5px',
+                }}
+              >
+                Live Formik State & Validation Errors
+              </span>
+              <pre
+                style={{
+                  margin: '8px 0 0 0',
+                  fontSize: '12px',
+                  color: '#93c5fd',
+                  whiteSpace: 'pre-wrap',
+                }}
+              >
+                {JSON.stringify(
+                  {
+                    values: formikProps.values,
+                    errors: formikProps.errors,
+                    touched: formikProps.touched,
+                  },
+                  null,
+                  2
+                )}
+              </pre>
+            </div>
+
+            <div
+              style={{
+                backgroundColor: '#ffffff',
+                borderRadius: '12px',
+                padding: '24px',
+                border: '1px solid #e5e7eb',
+                boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.05)',
+              }}
+            >
+              <Row gap="4">
+                <TextAreaInput
+                  alias="agent.systemPrompt"
+                  inputLabel="Agent System Prompt"
+                  placeholder="Define the autonomous agent's core directives and persona..."
+                  rows={4}
+                  design={args.design}
+                  width={6}
+                />
+                <TextAreaInput
+                  alias="agent.safetyNotes"
+                  inputLabel="Safety & Escalation Guardrails"
+                  placeholder="Specify fallback protocols and human-in-the-loop triggers..."
+                  rows={4}
+                  isHinted
+                  hintText="Required for production agent deployments."
+                  design={args.design}
+                  width={6}
+                />
+                <TextAreaInput
+                  alias="toolConfig"
+                  inputLabel="MCP Tooling Config (JSON)"
+                  sourceCode={true}
+                  sourceLang="json"
+                  isHinted
+                  hintText="Must be a valid JSON object. Try breaking the syntax to trigger validation."
+                  design={args.design}
+                  width={12}
+                  newRow
+                />
+              </Row>
+
+              <button
+                type="submit"
+                disabled={formikProps.isSubmitting}
+                style={{
+                  marginTop: '20px',
+                  padding: '10px 20px',
+                  backgroundColor: '#0f172a',
+                  color: '#ffffff',
+                  border: 'none',
+                  borderRadius: '6px',
+                  fontWeight: '600',
+                  fontSize: '14px',
+                  cursor: 'pointer',
+                }}
+              >
+                Validate & Submit
+              </button>
+            </div>
+          </Form>
+        )}
+      </Formik>
+    );
+  },
+  args: {
+    design: 'outline',
+  },
+  parameters: {
+    useRow: false,
+    docs: {
+      description: {
+        story:
+          'Showcases automatic Formik context binding via `alias` for both standard multi-line textareas (with nested dot-notation paths like `agent.systemPrompt`) and the PrismJS `sourceCode` JSON editor with live syntax validation.',
+      },
+      source: {
+        code: `import React from 'react';
+import { Formik, Form } from 'formik';
+import { TextAreaInput, Row } from '@emeraldemperaur/mito-ui';
+
+export const FormikTextAreaPipeline = () => {
+  return (
+    <Formik
+      initialValues={{
+        agent: { systemPrompt: '', safetyNotes: '' },
+        toolConfig: '{\\n  "maxRetries": 3,\\n  "timeoutMs": 5000\\n}',
+      }}
+      validate={(values) => {
+        const errors: Record<string, any> = {};
+
+        if (!values.agent.systemPrompt || values.agent.systemPrompt.trim().length < 20) {
+          errors.agent = { ...errors.agent, systemPrompt: 'System prompt must be at least 20 characters.' };
+        }
+
+        if (!values.agent.safetyNotes) {
+          errors.agent = { ...errors.agent, safetyNotes: 'Safety guardrails are required before deployment.' };
+        }
+
+        if (!values.toolConfig) {
+          errors.toolConfig = 'JSON configuration payload is required.';
+        } else {
+          try {
+            JSON.parse(values.toolConfig);
+          } catch {
+            errors.toolConfig = 'Invalid JSON syntax. Please check brackets and quotes.';
+          }
+        }
+
+        return errors;
+      }}
+      onSubmit={(values) => console.log('Submitted:', values)}
+    >
+      <Form>
+        <Row gap="4">
+          <TextAreaInput alias="agent.systemPrompt" inputLabel="Agent System Prompt" rows={4} width={6} />
+          <TextAreaInput alias="agent.safetyNotes" inputLabel="Safety & Escalation Guardrails" rows={4} width={6} />
+          <TextAreaInput
+            alias="toolConfig"
+            inputLabel="MCP Tooling Config (JSON)"
+            sourceCode={true}
+            sourceLang="json"
+            width={12}
+            newRow
+          />
+        </Row>
+        <button type="submit">Validate & Submit</button>
+      </Form>
+    </Formik>
+  );
+};`,
+      },
+    },
+  },
 };

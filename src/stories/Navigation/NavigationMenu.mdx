@@ -1,0 +1,472 @@
+import { Meta, Title, Subtitle, Canvas, Controls } from '@storybook/addon-docs/blocks';
+import * as NavigationMenuStories from './NavigationMenu.stories';
+import * as NavigationBarStories from './NavigationBar.stories';
+import * as NavigationRibbonStories from './NavigationRibbon.stories';
+import * as NavigationStripStories from './NavigationStrip.stories';
+
+<Meta title="Navigation/Usage Guide" />
+
+<Title>Navigation System</Title>
+<Subtitle>
+  Accessible, SSR-safe, router-agnostic navigation primitives for Mito UI — featuring multi-column mega-menus (`NavigationMenu`), sliding-indicator pill docks (`NavigationBar`), liquid SVG wave ribbons (`NavigationRibbon`), and animated underline strips (`NavigationStrip`).
+</Subtitle>
+
+---
+
+## Choosing the Right Navigation Component
+
+All four components share the same **Mito UI** design engine (`outline`, `material`, `neumorphic`, `skeuomorphic`, and `trueGlass`), router-agnostic link adapters, and scroll-aware visibility modes, while solving distinct navigation patterns:
+
+<table>
+  <thead>
+    <tr>
+      <th>Feature</th>
+      <th><code>NavigationMenu</code></th>
+      <th><code>NavigationBar</code></th>
+      <th><code>NavigationRibbon</code></th>
+      <th><code>NavigationStrip</code></th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><strong>Best For</strong></td>
+      <td>Complex web apps, documentation portals, multi-level sitemaps</td>
+      <td>Focused dashboards, app docks, section switchers</td>
+      <td>Brand-forward apps, Web3/SaaS workspaces, optical cutout headers</td>
+      <td>Editorial apps, SaaS portals needing hover focus + dropdowns</td>
+    </tr>
+    <tr>
+      <td><strong>Hierarchy</strong></td>
+      <td>Multi-column <code>dropdownGroups</code> + flyout <code>subItems</code></td>
+      <td>Flat single-level track (capped at <strong>9 items</strong>)</td>
+      <td>Flat single-level track (capped at <strong>9 items</strong>)</td>
+      <td>Multi-column <code>dropdownGroups</code> + flyout <code>subItems</code> (capped at <strong>9 items</strong>)</td>
+    </tr>
+    <tr>
+      <td><strong>Active Indicator</strong></td>
+      <td>Active text color + <code>aria-current="page"</code></td>
+      <td>Sliding indicator (<code>pill</code> or <code>rectangle</code>)</td>
+      <td>Liquid SVG wave cutout (<code>requestAnimationFrame</code>)</td>
+      <td>Center-out expanding underline + sibling dimming on hover</td>
+    </tr>
+    <tr>
+      <td><strong>Viewport Docking</strong></td>
+      <td>Fixed to <strong>top</strong> (<code>top: 0</code>)</td>
+      <td><strong>Top</strong> or <strong>bottom</strong> (<code>pagePosition</code>)</td>
+      <td><strong>Top</strong> or <strong>bottom</strong> (auto-flips wave + iOS safe-area)</td>
+      <td><strong>Top</strong> or <strong>bottom</strong> (auto-flips underline &amp; upward dropdowns)</td>
+    </tr>
+    <tr>
+      <td><strong>Logo Placement</strong></td>
+      <td><code>left</code> or <code>right</code> inline</td>
+      <td>6 positions (<code>{'top-*'}</code> / <code>{'bottom-*'}</code>)</td>
+      <td>6 positions (<code>{'top-*'}</code> / <code>{'bottom-*'}</code>)</td>
+      <td>6 positions (<code>{'top-*'}</code> / <code>{'bottom-*'}</code>)</td>
+    </tr>
+    <tr>
+      <td><strong>Mobile Behavior</strong></td>
+      <td>Hamburger drawer at <code>&lt;= 1024px</code></td>
+      <td>Horizontally scrollable pill track</td>
+      <td>Touch-scrollable track with auto-centering wave</td>
+      <td>Hamburger drawer at <code>&lt;= 1024px</code></td>
+    </tr>
+  </tbody>
+</table>
+
+---
+
+## Part 1: `NavigationMenu`
+
+`NavigationMenu` is the primary top-level header primitive (`z-index: 1000`, `min-height: 76px`). It supports direct links, grouped multi-column dropdowns, and nested flyout sub-menus that automatically convert into an indented accordion drawer on mobile viewports (`<= 1024px`).
+
+### Interactive Playground
+Click **Platform → VectorSigma Forms** to test multi-column dropdowns and nested flyout sub-menus.
+
+<Canvas of={NavigationMenuStories.Playground} />
+<Controls of={NavigationMenuStories.Playground} />
+
+### Quickstart & Nested Sub-Menus
+
+```tsx
+import React, { useState } from 'react';
+import { NavigationMenu, ActionButton, Button, Icon, type NavItem } from '@emeraldemperaur/mito-ui';
+
+export const AppHeader = () => {
+  const [activeRoute, setActiveRoute] = useState('/telemetry');
+
+  const navItems: NavItem[] = [
+    { label: 'Overview', href: '/', isActive: activeRoute === '/' },
+    {
+      label: 'Platform',
+      isActive: activeRoute.startsWith('/platform') || activeRoute === '/telemetry',
+      dropdownGroups: [
+        {
+          title: 'Core Engines',
+          items: [
+            {
+              title: 'Telemetry DataTable',
+              description: 'Real-time sortable grid with virtualized glass polish',
+              href: '/telemetry',
+              isActive: activeRoute === '/telemetry',
+              icon: <Icon height="20" name="dashboard" width="20"/>,
+            },
+            {
+              title: 'VectorSigma Forms',
+              description: 'Schema-driven form builder with Yup & Formik',
+              // Omit `href` when acting as a nested sub-menu trigger
+              subItems: [
+                { title: 'Codice (Linear)', description: 'Standard stacked layout', href: '/forms/codice' },
+                { title: 'Codex (Wizard)', description: 'Step-by-step strict validation', href: '/forms/codex' },
+                { title: 'Accordion Mode', description: 'Collapsible multi-section', href: '/forms/accordion' },
+              ],
+            },
+          ],
+        },
+      ],
+    },
+    { label: 'Pricing', href: '/pricing', isActive: activeRoute === '/pricing' },
+  ];
+
+  return (
+    <NavigationMenu
+      design="skeuomorphic"
+      trueGlass
+      darkMode
+      menuVisibility="auto-hide-reappear"
+      activeColor="#38bdf8"
+      logo={<span>MITO UI</span>}
+      navItems={navItems}
+      onNavigate={(href, e) => {
+        e.preventDefault(); // Remove when using Next.js / React Router Link
+        setActiveRoute(href);
+      }}
+      actionsNode={
+        <>
+          <ActionButton
+            design="skeuomorphic"
+            trueGlass
+            tactile
+            darkMode
+            icon={<Icon height="16" name="githublogo" width="16"/>}
+          />
+          <Button backgroundColor="#2563eb" darkMode textColor="#ffffff" variant="skeuomorphic">
+            Sign In
+          </Button>
+        </>
+      }
+    />
+  );
+};
+```
+
+### `NavigationMenu` Showcase
+<Canvas of={NavigationMenuStories.TrueGlassDarkShowcase} />
+
+---
+
+## Part 2: `NavigationBar`
+
+`NavigationBar` is a sliding-indicator navigation bar designed for clean, high-density route switching. It enforces a **9-item ceiling**, supports both **top** and **bottom** viewport docking, and smoothly interpolates its active indicator across items using `ResizeObserver`.
+
+### Interactive Playground
+Click any destination to watch the indicator glide across the track. Toggle `pillShape`, `blendIndicator`, `pagePosition`, and `logoPosition` in the Controls table.
+
+<Canvas of={NavigationBarStories.Playground} />
+<Controls of={NavigationBarStories.Playground} />
+
+### Quickstart (Bottom-Docked Glassmorphic Bar)
+
+```tsx
+import { Link } from 'react-router-dom';
+import { NavigationBar, ActionButton, Button, Icon, type NavigationBarItem } from '@emeraldemperaur/mito-ui';
+
+const navItems: NavigationBarItem[] = [
+  { label: 'Home', href: '/' },
+  { label: 'Telemetry', href: '/telemetry' },
+  { label: 'Forms', href: '/forms' },
+  { label: 'Settings', href: '/settings' },
+];
+
+export const BottomGlassDock = () => (
+  <NavigationBar
+    design="skeuomorphic"
+    trueGlass
+    darkMode
+    pagePosition="bottom"
+    menuVisibility="auto-hide-reappear"
+    logoPosition="bottom-center"
+    logo={<span style={{ letterSpacing: '0.12em' }}>MITO UI</span>}
+    logoHeight={28}
+    linkComponent={Link}
+    navItems={navItems}
+    actionsNode={
+      <>
+        <ActionButton darkMode design="skeuomorphic" onClick="{()" tactile title="GitHub" trueGlass> window.open('[https://github.com](https://github.com)', '_blank')}
+          icon={<Icon height="16" name="githublogo" width="16"/>}
+        />
+        <Button darkMode onClick="{()" variant="skeuomorphic"> console.log('Account')}
+        >
+          Account
+        </Button>
+      </>
+    }
+  />
+);
+```
+
+### Pill Color vs. Text Color (`blendIndicator`)
+
+In `NavigationBar`, the sliding indicator (pill) color and item text colors are controlled by separate props, with one important caveat around `blendIndicator`:
+
+<table>
+  <thead>
+    <tr>
+      <th>Target</th>
+      <th>Props</th>
+      <th>Behavior / Notes</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><strong>Pill Color (Sliding Indicator)</strong></td>
+      <td><code>activeColor</code> (or <code>darkModeColors</code>) + <code>{"blendIndicator={false}"}</code></td>
+      <td>By default, <code>blendIndicator</code> is <code>true</code>, which forces the pill to <code>#ffffff</code> with <code>mix-blend-mode: difference</code> (inverting whatever is behind it). You <strong>must</strong> set <code>{"blendIndicator={false}"}</code> for <code>activeColor</code> to render as a solid pill color.</td>
+    </tr>
+    <tr>
+      <td><strong>Default Text Color</strong></td>
+      <td><code>textColor</code> / <code>darkTextColor</code></td>
+      <td>Controls the resting text color of inactive nav items (and brand text) in light and dark modes.</td>
+    </tr>
+    <tr>
+      <td><strong>Hover Text Color</strong></td>
+      <td><code>hoverTextColor</code> / <code>darkHoverTextColor</code></td>
+      <td>Controls the text color of inactive nav items when hovered.</td>
+    </tr>
+    <tr>
+      <td><strong>Active Item Text Color</strong></td>
+      <td><code>activeTextColor</code></td>
+      <td>Explicit text color override applied to the currently active navigation item. Works best with <code>{"blendIndicator={false}"}</code> for exact color accuracy (defaults to <code>#ffffff</code> in solid mode, or auto-inverts when <code>{"blendIndicator={true}"}</code>).</td>
+    </tr>
+  </tbody>
+</table>
+
+```tsx
+<NavigationBar (dark (light // Active Inactive Pill Required activeColor="#2563eb" activeTextColor="#ffffff" background blendIndicator="{false}" color darkTextColor="#cbd5e1" hover hoverTextColor="#2563eb" item mode) navItems="{navItems}" on pill show text textColor="#334155" the to/>
+```
+
+### Shape & Docking Variants
+<Canvas of={NavigationBarStories.BottomDockedGlassmorphic} />
+<Canvas of={NavigationBarStories.RectangleShapeDark} />
+
+---
+
+## Part 3: `NavigationRibbon`
+
+`NavigationRibbon` is a mobile-ready navigation bar featuring a Safari-compatible **liquid SVG wave indicator** animated via `requestAnimationFrame` with quartic ease-in-out interpolation. Matching `waveColor` / `darkWaveColor` to the page canvas beneath the ribbon creates a seamless optical cutout illusion.
+
+### Interactive Playground
+Click any item to watch the liquid SVG wave glide across the ribbon. Adjust `waveHeight`, `waveWidth`, `waveDuration`, and `pagePosition` in the Controls table.
+
+<Canvas of={NavigationRibbonStories.Playground} />
+<Controls of={NavigationRibbonStories.Playground} />
+
+### Quickstart (Dark Material Cutout + React Router)
+
+```tsx
+import { Link } from 'react-router-dom';
+import { NavigationRibbon, ActionButton, Button, Icon } from '@emeraldemperaur/mito-ui';
+
+export const AppNavigationRibbon = () => (
+  <NavigationRibbon
+    design="material"
+    darkMode
+    backgroundColor="#0d0f17"
+    darkBackgroundColor="#0d0f17"
+    darkWaveColor="#e8eaf2"
+    activeColor="#4a7fff"
+    menuVisibility="auto-hide-reappear"
+    linkComponent={Link}
+    logo={<span>IAGON</span>}
+    logoPosition="top-left"
+    navItems={[
+      { label: 'Dashboard', href: '/dashboard' },
+      { label: 'Storage', href: '/storage', isActive: true },
+      { label: 'Compute', href: '/compute' },
+      { label: 'Earnings', href: '/earnings' },
+    ]}
+    actionsNode={
+      <>
+        <ActionButton darkMode design="material" onClick="{()" tactile title="GitHub"> window.open('[https://github.com](https://github.com)', '_blank')}
+          icon={<Icon height="16" name="githublogo" width="16"/>}
+        />
+        <Button darkMode onClick="{()" variant="material"> console.log('Connect')}>
+          Connect
+        </Button>
+      </>
+    }
+  />
+);
+```
+
+### Liquid Wave Controls
+- **`waveHeight`** *(default `16`)* — Protrusion height of the wave bump in pixels.
+- **`waveWidth`** *(default `72`)* — Half-width of the SVG bell curve in pixels.
+- **`waveDuration`** *(default `480`)* — Quartic ease-in-out travel duration in milliseconds.
+- **`waveColor` / `darkWaveColor`** — Fill color for the SVG wave; set this to match the content background beneath (or above, when bottom-docked) the ribbon.
+
+### Bottom-Docked Glassmorphic Showcase
+<Canvas of={NavigationRibbonStories.BottomDockedGlassmorphic} />
+
+---
+
+## Part 4: `NavigationStrip`
+
+`NavigationStrip` combines a center-out **animated expanding underline** and **sibling-dimming hover focus** (`dimSiblingsOnHover`) with full multi-column dropdowns and nested flyout sub-menus (`subItems`). When docked to the bottom (`pagePosition="bottom"`), it automatically flips the underline to the top border and opens dropdowns upward.
+
+### Interactive Playground
+Hover top-level items to test sibling dimming, or open **Platform → VectorSigma Forms** to test nested flyout sub-menus.
+
+<Canvas of={NavigationStripStories.Playground} />
+<Controls of={NavigationStripStories.Playground} />
+
+### Quickstart (Dark Glassmorphic + Nested Sub-Dropdowns)
+
+```tsx
+import React, { useState } from 'react';
+import { NavigationStrip, ActionButton, Button, Icon, type NavigationStripItem } from '@emeraldemperaur/mito-ui';
+
+export const StandaloneNavigationStripExample = () => {
+  const [activePath, setActivePath] = useState('#home');
+
+  const navItems: NavigationStripItem[] = [
+    { label: 'Home Page', href: '#home', isActive: activePath === '#home' },
+    {
+      label: 'Platform',
+      isActive: activePath.startsWith('#platform'),
+      dropdownGroups: [
+        {
+          title: 'Core Modules',
+          items: [
+            {
+              title: 'VectorSigma Forms',
+              description: 'Schema-driven form engines',
+              subItems: [
+                { title: 'Codice (Linear)', href: '#platform-codice', isActive: activePath === '#platform-codice' },
+                { title: 'Codex (Wizard)', href: '#platform-codex', isActive: activePath === '#platform-codex' },
+              ],
+            },
+            {
+              title: 'Telemetry Grid',
+              description: 'Enterprise DataTable',
+              href: '#platform-telemetry',
+              isActive: activePath === '#platform-telemetry',
+            },
+          ],
+        },
+      ],
+    },
+    { label: 'Pricing', href: '#pricing', isActive: activePath === '#pricing' },
+    { label: 'Contact', href: '#contact', isActive: activePath === '#contact' },
+  ];
+
+  return (
+    <NavigationStrip
+      design="skeuomorphic"
+      trueGlass
+      darkMode
+      activeColor="#3498db"
+      underlineHeight={2}
+      dimSiblingsOnHover={true}
+      menuVisibility="auto-hide-reappear"
+      logoPosition="top-left"
+      logo={<span>MITO UI</span>}
+      brandHref="#home"
+      navItems={navItems}
+      onNavigate={(href, e) => {
+        e.preventDefault();
+        setActivePath(href);
+      }}
+      actionsNode={
+        <>
+          <ActionButton darkMode design="skeuomorphic" onClick="{()" tactile title="GitHub" trueGlass> window.open('[https://github.com](https://github.com)', '_blank')}
+            icon={<Icon height="16" name="githublogo" width="16"/>}
+          />
+          <Button darkMode onClick="{()" variant="skeuomorphic"> alert('Sign In')}>
+            Sign In
+          </Button>
+        </>
+      }
+    />
+  );
+};
+```
+
+### `NavigationStrip` Showcases
+<Canvas of={NavigationStripStories.DarkGlassmorphicNested} />
+<Canvas of={NavigationStripStories.BottomDockedStrip} />
+
+---
+
+## Shared Architecture & Integration
+
+### Router Integration (Next.js & React Router)
+All four navigation link primitives forward both `href` and `to` to any custom `linkComponent`:
+
+```tsx
+// Next.js
+import Link from 'next/link';
+<NavigationMenu linkComponent="{Link}" navItems="{menuItems}"/>
+<NavigationBar linkComponent="{Link}" navItems="{barItems}"/>
+<NavigationRibbon linkComponent="{Link}" navItems="{ribbonItems}"/>
+<NavigationStrip linkComponent="{Link}" navItems="{stripItems}"/>
+
+// React Router
+import { Link } from 'react-router-dom';
+<NavigationMenu linkComponent="{Link}" navItems="{menuItems}"/>
+<NavigationBar linkComponent="{Link}" navItems="{barItems}"/>
+<NavigationRibbon linkComponent="{Link}" navItems="{ribbonItems}"/>
+<NavigationStrip linkComponent="{Link}" navItems="{stripItems}"/>
+```
+
+### Scroll Visibility Modes
+Control how any fixed navigation component reacts when users scroll past `100px`:
+
+<table>
+  <thead>
+    <tr>
+      <th>Mode</th>
+      <th>Behavior</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code>'sticky'</code></td>
+      <td>Permanently pinned to its docked edge (<code>top</code> or <code>bottom</code>).</td>
+    </tr>
+    <tr>
+      <td><code>'auto-hide'</code> <em>(default)</em></td>
+      <td>Slides out of view when scrolling down; reappears immediately on scroll up.</td>
+    </tr>
+    <tr>
+      <td><code>'auto-hide-reappear'</code></td>
+      <td>Slides out while scrolling down, then automatically reappears after scrolling pauses for <code>scrollReappearDelay</code> ms (default <code>450</code>).</td>
+    </tr>
+  </tbody>
+</table>
+
+> **Layout Tip:** Because all four components use `position: fixed`, add corresponding `paddingTop` (or `paddingBottom` when `pagePosition="bottom"`) to your main page wrapper so page content is not obscured behind the bar.
+
+### Exported Sub-Components
+For headless or custom layouts, each module exports Radix `asChild`-compatible primitives:
+- **NavigationMenu:** `NavigationMenuLink`, `NavigationMenuBrand`, `NavigationMenuActions`
+- **NavigationBar:** `NavigationBarLink`, `NavigationBarBrand`, `NavigationBarActions`
+- **NavigationRibbon:** `NavigationRibbonLink`, `NavigationRibbonBrand`, `NavigationRibbonActions`
+- **NavigationStrip:** `NavigationStripLink`, `NavigationStripBrand`, `NavigationStripActions`
+
+---
+
+## Accessibility & Keyboard Navigation
+
+- **Semantic Landmarks:** All four render a `<header>` wrapping a `<nav>` landmark with descriptive `aria-label` attributes.
+- **Active State:** Automatically applies `aria-current="page"` to the active route.
+- **Dropdowns & Dismissal (`NavigationMenu` & `NavigationStrip`):** Uses `aria-haspopup="true"`, `aria-expanded`, and `role="menu"` / `role="menuitem"`. Pressing `Escape` or clicking outside closes all open dropdowns, sub-menus, and the mobile drawer.
