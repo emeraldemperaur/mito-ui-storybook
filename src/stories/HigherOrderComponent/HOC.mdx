@@ -1,0 +1,263 @@
+import { Meta, Title, Subtitle, Canvas, Controls } from '@storybook/addon-docs/blocks';
+import * as LoaderGateStories from './LoaderGate.stories';
+import * as ErrorBoundaryStories from '../Layout/ErrorBoundary.stories';
+
+<Meta title="HigherOrderComponent/Usage Guide" />
+
+<Title>Higher-Order Components (HOC)</Title>
+<Subtitle>
+  Resilient, SSR-safe application wrappers for Mito UI that cleverly combine conditional splash &amp; transition gating (<code>LoaderGate</code>) with fault-isolated runtime error recovery (<code>ErrorBoundary</code>).
+</Subtitle>
+
+---
+
+## Overview & When to Use Each
+
+Both primitives wrap child component trees to control lifecycle boundaries, but they solve distinct architectural concerns:
+
+<table>
+  <thead>
+    <tr>
+      <th>Feature</th>
+      <th><code>LoaderGate</code></th>
+      <th><code>ErrorBoundary</code></th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><strong>Primary Role</strong></td>
+      <td>Full-screen splash barrier, transition curtain, and conditional auth/route gatekeeper</td>
+      <td>Runtime JavaScript exception interceptor and graceful fault-recovery wrapper</td>
+    </tr>
+    <tr>
+      <td><strong>Lifecycle Trigger</strong></td>
+      <td>Time-bound (<code>timeout</code> ms) with scroll lock and exit choreography</td>
+      <td>Event-driven — triggers only when a descendant throws during render/lifecycle</td>
+    </tr>
+    <tr>
+      <td><strong>Transition / UI</strong></td>
+      <td><code>fade</code> or <code>liquid-curtain</code> SVG wave, kinetic split-text, 4 design variants + <code>trueGlass</code></td>
+      <td>Headless — delegates 100% of fallback UI to static <code>ReactNode</code> or render-prop</td>
+    </tr>
+    <tr>
+      <td><strong>Routing / Telemetry</strong></td>
+      <td>Router-agnostic <code>onRedirect</code> + priority <code>onPositiveNode</code> / <code>onNegativeNode</code></td>
+      <td>External telemetry hook via <code>onError(error, info)</code> (Sentry, Datadog, Loki)</td>
+    </tr>
+    <tr>
+      <td><strong>Recovery / Unlock</strong></td>
+      <td>Unlocks automatically after <code>timeout</code> and unmounts overlay cleanly</td>
+      <td>Exposes <code>reset()</code> callback in render-prop to remount children without page reload</td>
+    </tr>
+  </tbody>
+</table>
+
+---
+
+## Part 1: `LoaderGate`
+
+`LoaderGate` orchestrates a full-screen, scroll-locked loading overlay (`z-index: 99999`) with kinetic split-text brand animations (or custom `brandNode` injection). It supports both smooth `fade` and animated `liquid-curtain` SVG wave transitions before revealing `children`, rendering priority conditional views, or triggering router-agnostic redirects.
+
+### Interactive Playground
+Adjust `design`, `entranceExit`, `trueGlass`, `timeout`, or conditional routing props in the Controls table, then click **Replay Gate** to preview the transition.
+
+<Canvas of={LoaderGateStories.Playground} />
+<Controls of={LoaderGateStories.Playground} />
+
+### Conditional Gate Resolution Order
+
+When `timeout` completes, `LoaderGate` evaluates its resolution branches in strict priority order:
+
+<table>
+  <thead>
+    <tr>
+      <th>Priority</th>
+      <th>Condition</th>
+      <th>Outcome</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><strong>1. Priority Node</strong></td>
+      <td><code>onPositive</code> + <code>onPositiveNode</code> (or <code>!onPositive</code> + <code>onNegative</code> + <code>onNegativeNode</code>)</td>
+      <td>Renders the priority <code>ReactNode</code> directly. <strong>No redirect occurs.</strong></td>
+    </tr>
+    <tr>
+      <td><strong>2. Router Redirect</strong></td>
+      <td>Active path branch (<code>onPositivePath</code> / <code>onNegativePath</code>) without a priority node + <code>onRedirect</code> provided</td>
+      <td>Invokes <code>onRedirect(targetPath)</code> (e.g., React Router <code>navigate</code> or Next.js <code>router.push</code>).</td>
+    </tr>
+    <tr>
+      <td><strong>3. Native Fallback</strong></td>
+      <td>Active path branch without a priority node and <code>onRedirect</code> omitted</td>
+      <td>Performs native browser navigation via <code>window.location.assign(targetPath)</code>.</td>
+    </tr>
+    <tr>
+      <td><strong>4. Default Content</strong></td>
+      <td>Neither <code>onPositive</code> nor <code>onNegative</code> overrides the gate</td>
+      <td>Unlocks and reveals <code>children</code>.</td>
+    </tr>
+  </tbody>
+</table>
+
+### Quickstart: Conditional Auth Gate (React Router)
+
+```tsx
+import React from 'react';
+import { useNavigate } from 'react-router-dom';
+import { LoaderGate, Icon } from '@emeraldemperaur/mito-ui';
+
+export const AuthGate = ({ isAuthenticated }: { isAuthenticated: boolean }) => {
+  const navigate = useNavigate();
+
+  return (
+    <LoaderGate
+      design="skeuomorphic"
+      trueGlass
+      darkMode
+      brandName="MITO UI"
+      loadingText="Verifying Session..."
+      timeout={1800}
+      logo={<Icon color="#38bdf8" height="32" name="rocket" width="32"/>}
+      logoPosition="left"
+      onPositive={isAuthenticated}
+      onPositivePath="/dashboard"
+      onNegative={!isAuthenticated}
+      onNegativeNode={<div>Access Denied — Please sign in to continue.</div>}
+      onRedirect={(path) => navigate(path)}
+    >
+      <div>Fallback Application Content</div>
+    </LoaderGate>
+  );
+};
+```
+
+<Canvas of={LoaderGateStories.AuthGateConditionalResolution} />
+
+### Liquid Curtain Preloader
+
+Switch `entranceExit="liquid-curtain"` to sweep an animated SVG wave curtain in from the right and out to the left. Tune `waveColor`, `darkWaveColor`, and `curtainSpeed` (default `750` ms) to match your brand palette.
+
+```tsx
+import React from 'react';
+import { LoaderGate } from '@emeraldemperaur/mito-ui';
+
+export const LiquidCurtainLoader = () => (
+  <LoaderGate brandName="MITO UI" curtainSpeed="{750}" darkMode darkWaveColor="#111827" design="material" entranceExit="liquid-curtain" loadingText="Initializing Workspace..." timeout="{2000}" waveColor="#0d0f17">
+    <main>Your Application Content</main>
+  </LoaderGate>
+);
+```
+
+<Canvas of={LoaderGateStories.LiquidCurtainPreloader} />
+
+### Design Architectures & `trueGlass`
+
+- **`material`** *(default)* — Clean, distraction-free base overlay letting the kinetic split-text stand without a card frame.
+- **`outline`** — Crisp `1.5px` bordered central card.
+- **`neumorphic`** — Soft 3D extruded card with a carved inner brand well calibrated to the parent background.
+- **`skeuomorphic`** — Tactile beveled hardware surface with directional lighting gradients and a recessed display plate.
+- **`trueGlass`** — Ultra-translucent frosted glass (`backdrop-filter: blur(24px)`) with subtle fractal noise grain and 1px glass rims.
+
+<Canvas of={LoaderGateStories.TrueGlassShowcase} />
+
+### Exported Sub-Components
+For custom layouts or Radix `asChild` composition, `LoaderGate` exports:
+- `LoaderGateCard` — Central loader container wrapper.
+- `LoaderGateBrand` — Brand and status typography slot.
+- `LoaderGateLogo` — Auxiliary brand logo container.
+- `LoaderGateContent` — Unlocked application content wrapper.
+
+---
+
+## Part 2: `ErrorBoundary`
+
+`ErrorBoundary` is an SSR-compatible React Class Component that intercepts unhandled JavaScript exceptions anywhere in its child component tree. Instead of crashing the entire application, it isolates the fault, logs the component stack, fires an optional `onError` telemetry hook, and renders your fallback UI.
+
+### Interactive Recovery (Render-Prop Pattern — Recommended)
+
+Passing a function to `fallback` gives you access to both the raw `Error` instance and a `reset` trigger that clears the boundary state and attempts to remount the child tree without a full page reload. Click **Inject Fault** below to test interception and recovery.
+
+<Canvas of={ErrorBoundaryStories.InteractiveRecovery} />
+<Controls of={ErrorBoundaryStories.InteractiveRecovery} />
+
+```tsx
+import React from 'react';
+import { ErrorBoundary } from '@emeraldemperaur/mito-ui';
+
+export const ResilientDashboard = () => (
+  <ErrorBoundary onError="{(error,"> {
+      // Pipe to Sentry, Datadog, or Loki
+      console.error('Telemetry:', error.message, info.componentStack);
+    }}
+    fallback={(error, reset) => (
+      <div role="alert" className="fault-container">
+        <h3>System Fault Intercepted</h3>
+        <code>{error.message}</code>
+        <button onClick={reset}>Reboot Component</button>
+      </div>
+    )}
+  >
+    <RevenueChartModule/>
+  </ErrorBoundary>
+);
+```
+
+### Static Fallback Placeholder
+
+For low-priority widgets (avatars, badges, secondary charts) where an interactive recovery flow isn't needed, pass a static `ReactNode` to `fallback`:
+
+<Canvas of={ErrorBoundaryStories.StaticPlaceholder} />
+
+```tsx
+import React from 'react';
+import { ErrorBoundary } from '@emeraldemperaur/mito-ui';
+
+export const SafeAvatar = () => (
+  <ErrorBoundary fallback={<div className="placeholder">Widget unavailable.</div>}>
+    <MinorAvatarModule/>
+  </ErrorBoundary>
+);
+```
+
+---
+
+## Composing `ErrorBoundary` + `LoaderGate`
+
+In production applications, wrap your `LoaderGate` inside an outer `ErrorBoundary` so that any runtime exception thrown by the unlocked workspace (or a conditional `onPositiveNode` / `onNegativeNode`) is gracefully caught without breaking the shell:
+
+```tsx
+import React from 'react';
+import { useNavigate } from 'react-router-dom';
+import { ErrorBoundary, LoaderGate } from '@emeraldemperaur/mito-ui';
+
+export const EnterpriseAppShell = ({ isAuthenticated }: { isAuthenticated: boolean }) => {
+  const navigate = useNavigate();
+
+  return (
+    <ErrorBoundary onError="{(error,"> Sentry.captureException(error, { extra: info })}
+      fallback={(error, reset) => (
+        <div role="alert">
+          <h2>Workspace Interrupted</h2>
+          <p>{error.message}</p>
+          <button onClick={reset}>Reload Workspace</button>
+        </div>
+      )}
+    >
+      <LoaderGate brandName="MITO UI" darkMode design="material" entranceExit="liquid-curtain" loadingText="Initializing Workspace..." onPositive="{isAuthenticated}" onPositivePath="/dashboard" onRedirect="{(path)" timeout="{1800}"> navigate(path)}
+      >
+        <MainWorkspace/>
+      </LoaderGate>
+    </ErrorBoundary>
+  );
+};
+```
+
+---
+
+## Accessibility & Best Practices
+
+- **Live Region (`LoaderGate`):** The full-screen overlay renders with `role="status"`, `aria-live="polite"`, and `aria-busy={isLoading}` so assistive technologies announce loading state transitions.
+- **Scroll Lock Cleanup (`LoaderGate`):** `document.body.style.overflow = 'hidden'` is automatically restored when the gate unlocks or if the component unmounts early.
+- **Alert Landmarks (`ErrorBoundary`):** Always include `role="alert"` on your custom `fallback` container so screen readers immediately announce intercepted runtime faults.
+- **Boundary Scope (`ErrorBoundary`):** Place granular `ErrorBoundary` wrappers around independent data widgets (charts, tables, third-party embeds) rather than relying solely on a single root boundary.
